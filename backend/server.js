@@ -31,7 +31,7 @@ function saveDB(data) {
 }
 function loadLogs() {
   if (!fs.existsSync(LOGS_FILE)) return [];
-  return JSON.parse(LOGS_FILE, 'utf8');
+  return JSON.parse(fs.readFileSync(LOGS_FILE, 'utf8'));
 }
 function saveLog(entry) {
   const logs = loadLogs();
@@ -623,11 +623,11 @@ app.post('/api/configs/:id/test', authMiddleware, async (req, res) => {
     user: req.user.username
   };
   
+  const start = Date.now();
   try {
     let connected = false;
     let message = '';
     let latency = 0;
-    const start = Date.now();
     
     switch (api.id) {
       case 'google-maps': {

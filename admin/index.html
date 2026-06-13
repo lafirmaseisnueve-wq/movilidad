@@ -468,5 +468,15 @@
 
 <script src="../js/api.js"></script>
 <script src="admin.js"></script>
+<script src="api-config.js"></script>
+<script>
+function showApiTab(tab) {
+  document.querySelectorAll('.amc-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.amc-tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.amc-tab:nth-child(${tab==='credentials'?1:tab==='endpoints'?2:tab==='pricing'?3:4})`).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+function loadApiLogs() { loadApiDashboard(); }
+</script>
 </body>
 </html>

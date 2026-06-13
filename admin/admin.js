@@ -13,7 +13,7 @@ function showPage(id) {
   const links = document.querySelectorAll('.nav-link');
   links.forEach(l => { if (l.textContent.toLowerCase().includes(id.substring(0,4))) l.classList.add('active'); });
   // Update title
-  const titles = { dashboard:'Dashboard', livemap:'Live Map GPS', users:'Gestión de Usuarios', fleets:'Flotillas', documents:'Aprobación de Documentos', pricing:'Surge Pricing', commissions:'Comisiones y Facturación', 'incentives-admin':'Incentivos y Promociones', soc:'Centro de Seguridad (SOC)', tickets:'Tickets de Soporte', cities:'Ciudades y Geocercas', analytics:'Analytics & BI' };
+  const titles = { dashboard:'Dashboard', livemap:'Live Map GPS', users:'Gestión de Usuarios', fleets:'Flotillas', documents:'Aprobación de Documentos', pricing:'Surge Pricing', commissions:'Comisiones y Facturación', 'incentives-admin':'Incentivos y Promociones', soc:'Centro de Seguridad (SOC)', tickets:'Tickets de Soporte', 'api-config':'APIs y Servicios', cities:'Ciudades y Geocercas', analytics:'Analytics & BI' };
   document.getElementById('page-title').textContent = titles[id] || 'Admin';
   // Init specific pages
   if (id === 'livemap') setTimeout(initAdminMap, 200);
@@ -27,6 +27,7 @@ function showPage(id) {
   if (id === 'tickets') populateTickets();
   if (id === 'cities') populateCities();
   if (id === 'incentives-admin') populateAdminIncentives();
+  if (id === 'api-config') initApiConfigPanel();
 }
 
 // ===== DASHBOARD CHARTS =====
