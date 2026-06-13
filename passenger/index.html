@@ -356,6 +356,28 @@
               <div class="eta">10 min</div>
             </div>
           </div>
+          <div class="ride-cat" onclick="selectCategory(this, 'premier')">
+            <div class="cat-icon">👑</div>
+            <div class="cat-info">
+              <div class="cat-name">Movilidad Premier</div>
+              <div class="cat-desc">Lujo · Chofer profesional · Mercedes/BMW</div>
+            </div>
+            <div class="cat-price">
+              <div class="price">$320</div>
+              <div class="eta">15 min</div>
+            </div>
+          </div>
+          <div class="ride-cat" onclick="selectCategory(this, 'intercity')">
+            <div class="cat-icon">🛣️</div>
+            <div class="cat-info">
+              <div class="cat-name">Movilidad Intercity</div>
+              <div class="cat-desc">Viajes largos · CDMX→Querétaro, Puebla, Toluca</div>
+            </div>
+            <div class="cat-price">
+              <div class="price">$580</div>
+              <div class="eta">20 min</div>
+            </div>
+          </div>
 
           <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
             <div style="flex:1; font-size:12px; color:var(--text-secondary);"><i class="fas fa-credit-card" style="color:var(--primary);"></i> Visa •••4242</div>
@@ -708,7 +730,7 @@
 
     // ===== RIDE SELECTION =====
     let selectedCategory = 'express';
-    const categoryPrices = { express: 92, comfort: 125, 'pon-precio': null, taxi: null, moto: 52, protect: 78 };
+    const categoryPrices = { express: 92, comfort: 125, 'pon-precio': null, taxi: null, moto: 52, protect: 78, premier: 320, intercity: 580 };
 
     function selectCategory(el, cat) {
       document.querySelectorAll('.ride-cat').forEach(c => c.classList.remove('selected'));
@@ -738,10 +760,12 @@
       const cats = [
         { id: 'share', icon: '🚙', name: 'Movilidad Share', price: '$78', desc: 'Comparte viaje' },
         { id: 'express', icon: '🚗', name: 'Movilidad Express', price: '$92', desc: '4 pasajeros' },
+        { id: 'pon-precio', icon: '💰', name: 'Pon tu Precio', price: 'Proponer', desc: 'Negocia' },
         { id: 'taxi', icon: '🚕', name: 'Movilidad Taxi', price: 'Taxímetro', desc: 'Oficial' },
-        { id: 'comfort', icon: '✨', name: 'Movilidad Comfort', price: '$125', desc: 'Premium' },
-        { id: 'top-taxi', icon: '🎩', name: 'Top Taxi', price: '$250', desc: 'Lujo' },
-        { id: 'moto', icon: '🏍️', name: 'Movilidad Moto', price: '$52', desc: '1 pasajero' }
+        { id: 'moto', icon: '🏍️', name: 'Movilidad Moto', price: '$52', desc: '1 pasajero' },
+        { id: 'protect', icon: '🛡️', name: 'Movilidad Protect', price: '$78', desc: 'Seguro' },
+        { id: 'premier', icon: '👑', name: 'Movilidad Premier', price: '$320', desc: 'Lujo' },
+        { id: 'intercity', icon: '🛣️', name: 'Movilidad Intercity', price: '$580', desc: 'Larga distancia' }
       ];
       list.innerHTML = cats.map(c => `
         <div class="multi-item" onclick="toggleMulti('${c.id}', this)">

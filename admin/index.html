@@ -107,7 +107,25 @@
     <div class="nav-section">
       <div class="nav-section-title">Seguridad</div>
       <div class="nav-link" onclick="showPage('soc')"><i class="fas fa-shield-alt"></i> SOC <span class="badge-sm">2</span></div>
+      <div class="nav-link" onclick="showPage('tripcheck')"><i class="fas fa-brain"></i> TripCheck AI <span class="badge-sm" style="background:var(--primary);">NEW</span></div>
       <div class="nav-link" onclick="showPage('tickets')"><i class="fas fa-headset"></i> Tickets Soporte</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Automotriz</div>
+      <div class="nav-link" onclick="showPage('charging')"><i class="fas fa-charging-station"></i> Carga EV</div>
+      <div class="nav-link" onclick="showPage('maintenance')"><i class="fas fa-wrench"></i> Mantenimiento</div>
+      <div class="nav-link" onclick="showPage('financing')"><i class="fas fa-hand-holding-usd"></i> Financiamiento</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Ciudades & IA</div>
+      <div class="nav-link" onclick="showPage('smartcity')"><i class="fas fa-city"></i> Smart Cities</div>
+      <div class="nav-link" onclick="showPage('traffic-ai')"><i class="fas fa-traffic-light"></i> Traffic AI</div>
+      <div class="nav-link" onclick="showPage('mapping')"><i class="fas fa-map-marked-alt"></i> Mapa Propio</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Autónomo & EV</div>
+      <div class="nav-link" onclick="showPage('robotaxi')"><i class="fas fa-robot"></i> Robotaxis <span class="badge-sm" style="background:var(--success);">BETA</span></div>
+      <div class="nav-link" onclick="showPage('hybrid-dispatch')"><i class="fas fa-random"></i> Dispatch Híbrido</div>
     </div>
     <div class="nav-section">
       <div class="nav-section-title">Configuración</div>
@@ -441,6 +459,301 @@
             <button class="btn btn-ghost" onclick="resetApiConfig()">🔄 Reset</button>
             <div style="flex:1;"></div>
             <span style="font-size:11px; color:var(--text-light); display:flex; align-items:center;">Último test: <span id="modal-last-tested" style="margin-left:4px;">Nunca</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TRIPCHECK AI ENGINE ===== -->
+      <div class="page" id="page-tripcheck">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:20px;">
+          <div class="stat-card"><div class="sc-label">Riesgo en Tiempo Real</div><div class="sc-value" style="color:var(--success);">Bajo</div><div class="sc-change up"><i class="fas fa-shield-alt"></i> 12 incidentes hoy</div></div>
+          <div class="stat-card"><div class="sc-label">Desviaciones de Ruta</div><div class="sc-value">3</div><div class="sc-change down"><i class="fas fa-route"></i> 2 en investigación</div></div>
+          <div class="stat-card"><div class="sc-label">Alertas de Velocidad</div><div class="sc-value">7</div><div class="sc-change down"><i class="fas fa-tachometer-alt"></i> 5 resueltas</div></div>
+          <div class="stat-card"><div class="sc-label">Validación Humana</div><div class="sc-value">2</div><div class="sc-change"><i class="fas fa-user-shield"></i> Pendientes revisión</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-brain" style="color:var(--primary);"></i> Motor de Análisis de Riesgo</h3>
+            <div style="padding:16px; background:var(--primary-50); border-radius:var(--radius); margin-bottom:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:12px; font-weight:600;">Nivel de Riesgo Global</span>
+                <span style="font-size:12px; font-weight:800; color:var(--success);">🟢 BAJO</span>
+              </div>
+              <div style="height:8px; background:var(--border); border-radius:4px; overflow:hidden;">
+                <div style="height:100%; width:15%; background:var(--success); border-radius:4px;"></div>
+              </div>
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); line-height:1.6;">
+              <p><strong>Análisis en tiempo real:</strong> Monitoreo continuo de 847 viajes activos con IA de seguridad. Se evalúan 14 variables conductuales por segundo incluyendo aceleración, frenado, giros y desviaciones.</p>
+              <p style="margin-top:8px;"><strong>Patrones detectados:</strong> El motor identifica comportamientos anómalos comparando contra 2.3M de perfiles históricos de viaje. Sensibilidad configurada al 94%.</p>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-route" style="color:var(--warning);"></i> Desviaciones de Ruta Activas</h3>
+            <div style="font-size:12px;">
+              <div style="display:flex; align-items:center; gap:10px; padding:10px; background:#FEF3C7; border-radius:8px; margin-bottom:8px; border-left:3px solid var(--warning);">
+                <span style="font-size:20px;">⚠️</span>
+                <div style="flex:1;"><strong>Viaje #4821</strong> — Chofer desviado 1.2km de ruta óptima en Polanco-Centro<br><span style="color:var(--text-light);">Hace 3 min · Velocidad: 45km/h · Pasajero notificado</span></div>
+                <button class="btn btn-sm btn-warning" onclick="alert('Escalando a experto humano')">Escalar</button>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; padding:10px; background:var(--primary-50); border-radius:8px; margin-bottom:8px; border-left:3px solid var(--primary);">
+                <span style="font-size:20px;">🔍</span>
+                <div style="flex:1;"><strong>Viaje #4799</strong> — Ruta alternativa detectada (tráfico en Eje Central)<br><span style="color:var(--text-light);">Hace 12 min · Desviación justificada · Auto-aprobada por IA</span></div>
+                <span class="badge badge-success">OK</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; padding:10px; background:#FEE2E2; border-radius:8px; border-left:3px solid var(--danger);">
+                <span style="font-size:20px;">🚨</span>
+                <div style="flex:1;"><strong>Viaje #4805</strong> — Desviación significativa + velocidad excesiva<br><span style="color:var(--text-light);">Hace 1 min · SOS activado · Experto humano conectado</span></div>
+                <button class="btn btn-sm btn-danger" onclick="alert('Monitoreo activo')">911</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px;">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-user-shield" style="color:var(--primary);"></i> Validación por Experto Humano</h3>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
+            <div style="padding:12px; background:var(--primary-50); border-radius:8px; text-align:center;">
+              <div style="font-size:24px; font-weight:800; color:var(--primary);">5</div>
+              <div style="font-size:11px; color:var(--text-secondary);">Expertos Activos</div>
+            </div>
+            <div style="padding:12px; background:#FEF3C7; border-radius:8px; text-align:center;">
+              <div style="font-size:24px; font-weight:800; color:var(--warning);">2</div>
+              <div style="font-size:11px; color:var(--text-secondary);">Casos Pendientes</div>
+            </div>
+            <div style="padding:12px; background:#D1FAE5; border-radius:8px; text-align:center;">
+              <div style="font-size:24px; font-weight:800; color:var(--success);">98.2%</div>
+              <div style="font-size:11px; color:var(--text-secondary);">Tasa de Resolución</div>
+            </div>
+          </div>
+          <p style="font-size:12px; color:var(--text-secondary); margin-top:12px; line-height:1.5;">El sistema TripCheck escala automáticamente incidentes de alto riesgo a expertos humanos certificados quienes tienen acceso a audio en vivo, GPS, y contacto directo con pasajero y chofer. Tiempo promedio de respuesta: 8 segundos.</p>
+        </div>
+      </div>
+
+      <!-- ===== CHARGING EV ===== -->
+      <div class="page" id="page-charging">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:20px;">
+          <div class="stat-card"><div class="sc-label">Estaciones de Carga</div><div class="sc-value">234</div><div class="sc-change up"><i class="fas fa-arrow-up"></i> +12 este mes</div></div>
+          <div class="stat-card"><div class="sc-label">Cargas Hoy</div><div class="sc-value">1,847</div><div class="sc-change up"><i class="fas fa-arrow-up"></i> +23%</div></div>
+          <div class="stat-card"><div class="sc-label">kWh Distribuidos</div><div class="sc-value">45.2K</div><div class="sc-change up"><i class="fas fa-bolt"></i> +18%</div></div>
+          <div class="stat-card"><div class="sc-label">Ingreso Carga</div><div class="sc-value">$2.1M</div><div class="sc-change up"><i class="fas fa-arrow-up"></i> +31%</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-charging-station" style="color:var(--success);"></i> Red de Carga Movilidad</h3>
+            <div id="map-charging" style="height:300px; border-radius:var(--radius); margin-bottom:12px; background:#E5E7EB;"></div>
+            <div style="font-size:12px; color:var(--text-secondary); line-height:1.6;">
+              Red propietaria de estaciones de carga rápida DC (50-350kW) y nivel 2 AC estratégicamente ubicadas en puntos de alta demanda. Integración con la app del chofer para reserva de cargador y ruta optimizada con paradas de carga.
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-chart-line" style="color:var(--primary);"></i> Utilización por Zona</h3>
+            <canvas id="chart-charging" height="260"></canvas>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px;">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Estaciones Recientes</h3>
+          <table class="data-table">
+            <thead><tr><th>Estación</th><th>Zona</th><th>Tipo</th><th>Uso Hoy</th><th>Disponibilidad</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>ESC-001 Polanco</td><td>Polanco</td><td>DC 150kW × 4</td><td>87%</td><td>1 de 4</td><td><span class="badge badge-success">Activa</span></td></tr>
+              <tr><td>ESC-002 Santa Fe</td><td>Santa Fe</td><td>DC 350kW × 2 + AC × 6</td><td>92%</td><td>0 de 8</td><td><span class="badge badge-warning">Llena</span></td></tr>
+              <tr><td>ESC-003 Centro</td><td>Cuauhtémoc</td><td>DC 50kW × 3</td><td>65%</td><td>2 de 3</td><td><span class="badge badge-success">Activa</span></td></tr>
+              <tr><td>ESC-004 Aeropuerto</td><td>Venustiano</td><td>DC 150kW × 6</td><td>78%</td><td>3 de 6</td><td><span class="badge badge-success">Activa</span></td></tr>
+              <tr><td>ESC-005 Interlomas</td><td>Huixquilucan</td><td>DC 350kW × 2</td><td>45%</td><td>2 de 2</td><td><span class="badge badge-info">Mantenimiento</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== MAINTENANCE ===== -->
+      <div class="page" id="page-maintenance">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:20px;">
+          <div class="stat-card"><div class="sc-label">Centros Afiliados</div><div class="sc-value">89</div><div class="sc-change up"><i class="fas fa-arrow-up"></i> +5 este mes</div></div>
+          <div class="stat-card"><div class="sc-label">Servicios del Mes</div><div class="sc-value">3,421</div><div class="sc-change up"><i class="fas fa-arrow-up"></i> +15%</div></div>
+          <div class="stat-card"><div class="sc-label">Ahorro Promedio</div><div class="sc-value">32%</div><div class="sc-change up"><i class="fas fa-piggy-bank"></i> vs. mercado</div></div>
+          <div class="stat-card"><div class="sc-label">Satisfacción</div><div class="sc-value">4.7⭐</div><div class="sc-change up"><i class="fas fa-smile"></i> Excelente</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-wrench" style="color:var(--warning);"></i> Servicios Más Solicitados</h3>
+            <canvas id="chart-maintenance" height="250"></canvas>
+          </div>
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-tools" style="color:var(--primary);"></i> Paquetes de Mantenimiento</h3>
+            <div style="font-size:12px;">
+              <div style="padding:12px; background:var(--primary-50); border-radius:8px; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <strong>Básico</strong><span style="color:var(--primary); font-weight:800;">$499/mes</span>
+                </div>
+                <p style="color:var(--text-secondary); margin-top:4px;">Cada 10K km: Aceite, filtros, revisión frenos, llantas, niveles</p>
+              </div>
+              <div style="padding:12px; background:#FEF3C7; border-radius:8px; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <strong>Preventivo Plus</strong><span style="color:var(--warning); font-weight:800;">$899/mes</span>
+                </div>
+                <p style="color:var(--text-secondary); margin-top:4px;">Cada 5K km: Todo Básico + alineación, balanceo, diagnóstico computarizado, lavado</p>
+              </div>
+              <div style="padding:12px; background:#D1FAE5; border-radius:8px; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <strong>Premium EV</strong><span style="color:var(--success); font-weight:800;">$1,299/mes</span>
+                </div>
+                <p style="color:var(--text-secondary); margin-top:4px;">Exclusivo EV: Diagnóstico batería, software update, cabin filter, llantas EV, cuidado pintura</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== FINANCING ===== -->
+      <div class="page" id="page-financing">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:20px;">
+          <div class="stat-card"><div class="sc-label">Vehículos Financiados</div><div class="sc-value">4,231</div><div class="sc-change up"><i class="fas fa-car"></i> +234 este mes</div></div>
+          <div class="stat-card"><div class="sc-label">Cartera Vigente</div><div class="sc-value">$847M</div><div class="sc-change up"><i class="fas fa-dollar-sign"></i> MXN</div></div>
+          <div class="stat-card"><div class="sc-label">Tasa de Morosidad</div><div class="sc-value" style="color:var(--success);">1.8%</div><div class="sc-change up"><i class="fas fa-check-circle"></i> Bajo riesgo</div></div>
+          <div class="stat-card"><div class="sc-label">Ingreso por Financiamiento</div><div class="sc-value">$12.3M</div><div class="sc-change up"><i class="fas fa-arrow-up"></i> +22% mes</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-hand-holding-usd" style="color:var(--success);"></i> Programas de Financiamiento</h3>
+            <div style="font-size:12px;">
+              <div style="padding:12px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px;">
+                <strong>🚗 Auto Ejecutivo</strong>
+                <p style="color:var(--text-secondary); margin-top:4px;">Enganche $15K · Plazo 48 meses · Tasa 9.5% · Para choferes con 6+ meses y rating 4.5+</p>
+                <div style="margin-top:6px; display:flex; gap:4px;"><span class="badge badge-success">Popular</span><span class="badge badge-info">4,231 activos</span></div>
+              </div>
+              <div style="padding:12px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px;">
+                <strong>⚡ EV Green Finance</strong>
+                <p style="color:var(--text-secondary); margin-top:4px;">Enganche $0 · Plazo 60 meses · Tasa subsidiada 6.5% · Exclusivo vehículos eléctricos certificados</p>
+                <div style="margin-top:6px; display:flex; gap:4px;"><span class="badge badge-primary">Nuevo</span><span class="badge badge-success">Eco-friendly</span></div>
+              </div>
+              <div style="padding:12px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px;">
+                <strong>🏭 Flota Empresarial</strong>
+                <p style="color:var(--text-secondary); margin-top:4px;">Financiamiento volumen 10+ unidades · Tasa preferencial 7.8% · Gestión centralizada de flota</p>
+                <div style="margin-top:6px; display:flex; gap:4px;"><span class="badge badge-info">B2B</span><span class="badge badge-warning">Requiere aprobación</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-chart-pie" style="color:var(--primary);"></i> Distribución de Cartera</h3>
+            <canvas id="chart-financing" height="260"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SMART CITIES ===== -->
+      <div class="page" id="page-smartcity">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:20px;">
+          <div class="stat-card"><div class="sc-label">Ciudades Integradas</div><div class="sc-value">18</div><div class="sc-change up"><i class="fas fa-city"></i> +3 este año</div></div>
+          <div class="stat-card"><div class="sc-label">Pasajeros Multimodal</div><div class="sc-value">2.1M</div><div class="sc-change up"><i class="fas fa-subway"></i> +45%</div></div>
+          <div class="stat-card"><div class="sc-label">Conexiones Transporte Público</div><div class="sc-value">847</div><div class="sc-change up"><i class="fas fa-bus"></i> Paradas</div></div>
+          <div class="stat-card"><div class="sc-label">Reducción CO₂</div><div class="sc-value">12.4K</div><div class="sc-change up"><i class="fas fa-leaf"></i> ton/año</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-city" style="color:var(--primary);"></i> Infraestructura Urbana Inteligente</h3>
+            <div style="font-size:12px; line-height:1.6; color:var(--text-secondary);">
+              <p><strong>Integración de Transporte Público:</strong> Conexión directa con Metro, Metrobús, Tren Ligero, Ecobici y RTP. El pasajero planifica rutas multimodales con pago unificado vía la app Movilidad.</p>
+              <p style="margin-top:8px;"><strong>Sensores IoT Urbanos:</strong> 12,400 sensores de tráfico, estacionamiento y calidad del aire instalados en colaboración con 18 municipios. Los datos alimentan nuestros modelos de predicción.</p>
+              <p style="margin-top:8px;"><strong>Dashboard Ciudadano:</strong> Portal para gobiernos municipales con métricas de movilidad, puntos críticos, y sugerencias de mejora vial basadas en datos reales de los 2.3M de viajes diarios.</p>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-bus" style="color:var(--info);"></i> Cobertura Multimodal</h3>
+            <canvas id="chart-smartcity" height="260"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TRAFFIC AI ===== -->
+      <div class="page" id="page-traffic-ai">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:20px;">
+          <div class="stat-card"><div class="sc-label">Predicción de Tráfico</div><div class="sc-value" style="color:var(--success);">94.2%</div><div class="sc-change up"><i class="fas fa-brain"></i> Precisión</div></div>
+          <div class="stat-card"><div class="sc-label">Rutas Optimizadas/hora</div><div class="sc-value">45.8K</div><div class="sc-change up"><i class="fas fa-route"></i> +31%</div></div>
+          <div class="stat-card"><div class="sc-label">Ahorro Tiempo Prom.</div><div class="sc-value">8.3 min</div><div class="sc-change up"><i class="fas fa-clock"></i> por viaje</div></div>
+          <div class="stat-card"><div class="sc-label">Modelos Entrenados</div><div class="sc-value">14</div><div class="sc-change up"><i class="fas fa-microchip"></i> GPU cluster</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-traffic-light" style="color:var(--danger);"></i> IA de Tráfico en Tiempo Real</h3>
+            <div style="font-size:12px; line-height:1.6; color:var(--text-secondary);">
+              <p><strong>Motor de Predicción:</strong> Red neuronal entrenada con 847M de registros de viaje, datos de sensores IoT y variables meteorológicas. Predice congestión 30 minutos adelante con 94.2% de precisión.</p>
+              <p style="margin-top:8px;"><strong>Optimización de Rutas:</strong> Algoritmo de routing dinámico que recalcula la ruta óptima cada 12 segundos considerando 7 variables: tráfico, clima, eventos, obras, demanda, horas pico y preferencias del pasajero.</p>
+              <p style="margin-top:8px;"><strong>Heatmap Predictivo:</strong> Visualización en tiempo real de zonas de alta demanda futura, permitiendo reposicionamiento proactivo de la flota 15 minutos antes del pico de demanda.</p>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-wave-square" style="color:var(--primary);"></i> Flujo Vehicular por Hora</h3>
+            <canvas id="chart-traffic" height="260"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PROPRIETARY MAPPING ===== -->
+      <div class="page" id="page-mapping">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:20px;">
+          <div class="stat-card"><div class="sc-label">km Mapeados</div><div class="sc-value">1.2M</div><div class="sc-change up"><i class="fas fa-road"></i> +85K este mes</div></div>
+          <div class="stat-card"><div class="sc-label">Precisión Cartográfica</div><div class="sc-value">0.5m</div><div class="sc-change up"><i class="fas fa-crosshairs"></i> Sub-metro</div></div>
+          <div class="stat-card"><div class="sc-label">Actualizaciones/día</div><div class="sc-value">34.2K</div><div class="sc-change up"><i class="fas fa-sync"></i> Crowdsourced</div></div>
+          <div class="stat-card"><div class="sc-label">Cobertura Nacional</div><div class="sc-value">78%</div><div class="sc-change up"><i class="fas fa-map"></i> Zonas urbanas</div></div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-map-marked-alt" style="color:var(--primary);"></i> Mapa Propietario Movilidad</h3>
+          <div id="map-proprietary" style="height:400px; border-radius:var(--radius); margin-bottom:12px; background:#E5E7EB;"></div>
+          <div style="font-size:12px; line-height:1.6; color:var(--text-secondary);">
+            <p><strong>Sistema de Mapeo Propio:</strong> Infraestructura cartográfica independiente construida con datos crowdsourced de los choferes. Cada viaje genera telemetría HD (posición, velocidad, aceleración, orientación) que actualiza nuestro mapa en tiempo real.</p>
+            <p style="margin-top:8px;"><strong>Ventaja Competitiva:</strong> A diferencia de Google Maps o Mapbox, nuestro mapa incluye restricciones de giro actualizadas al minuto, rotondas no documentadas, accesos privados a residenciales, y velocidad real por carril — datos que solo una red de 23K choferes activos puede proveer.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ROBOTAXI ===== -->
+      <div class="page" id="page-robotaxi">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:20px;">
+          <div class="stat-card"><div class="sc-label">Robotaxis Activos</div><div class="sc-value">47</div><div class="sc-change"><i class="fas fa-robot" style="color:var(--primary);"></i> Fase Beta</div></div>
+          <div class="stat-card"><div class="sc-label">Viajes Autónomos Hoy</div><div class="sc-value">312</div><div class="sc-change up"><i class="fas fa-arrow-up"></i> +18% vs ayer</div></div>
+          <div class="stat-card"><div class="sc-label">Intervenciones Humanas</div><div class="sc-value">2</div><div class="sc-change up"><i class="fas fa-user"></i> 0.6% ratio</div></div>
+          <div class="stat-card"><div class="sc-label">Safety Score</div><div class="sc-value" style="color:var(--success);">9.8</div><div class="sc-change up"><i class="fas fa-star"></i> /10 SAE Level 4</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-robot" style="color:var(--primary);"></i> Flota Robotaxi</h3>
+            <div style="font-size:12px; line-height:1.6; color:var(--text-secondary);">
+              <p><strong>Nivel SAE 4:</strong> Autonomía completa en área geográfica definida (ODD). Actualmente operando en zona Polanco-Condesa-Roma de CDMX como corredor piloto.</p>
+              <p style="margin-top:8px;"><strong>Stack Tecnológico:</strong> 12 cámaras, 5 LiDAR, 8 radares, compute box de 500 TOPS. Redundancia triple en percepción, planificación y control.</p>
+              <p style="margin-top:8px;"><strong>Supervisión Remota:</strong> Centro de operaciones con 5 operadores monitoreando telemetría en tiempo real. Capacidad de toma de control remoto en <200ms.</p>
+            </div>
+            <div style="margin-top:12px; padding:12px; background:#D1FAE5; border-radius:8px;">
+              <strong style="font-size:12px;">🟢 Estado del Programa:</strong>
+              <span style="font-size:12px; color:var(--text-secondary);"> Beta controlada — Solo usuarios verificados con NIP de seguridad. Horario: Lun-Vie 7AM-10PM. Expansión a Santa Fe programada para Q3 2026.</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-chart-area" style="color:var(--success);"></i> Rendimiento Robotaxi</h3>
+            <canvas id="chart-robotaxi" height="260"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== HYBRID DISPATCH ===== -->
+      <div class="page" id="page-hybrid-dispatch">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:20px;">
+          <div class="stat-card"><div class="sc-label">Dispatch Eficiencia</div><div class="sc-value">96.4%</div><div class="sc-change up"><i class="fas fa-bullseye"></i> Óptimo</div></div>
+          <div class="stat-card"><div class="sc-label">ETA Precisión</div><div class="sc-value">±1.2 min</div><div class="sc-change up"><i class="fas fa-clock"></i> Promedio</div></div>
+          <div class="stat-card"><div class="sc-label">Ratio Humano:Autónomo</div><div class="sc-value">85:15</div><div class="sc-change"><i class="fas fa-random"></i> Híbrido</div></div>
+          <div class="stat-card"><div class="sc-label">Ahorro por Optimización</div><div class="sc-value">$4.2M</div><div class="sc-change up"><i class="fas fa-dollar-sign"></i> /mes</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-random" style="color:var(--primary);"></i> Plataforma de Dispatch Híbrido</h3>
+            <div style="font-size:12px; line-height:1.6; color:var(--text-secondary);">
+              <p><strong>Motor de Asignación Dual:</strong> El sistema decide en tiempo real si asignar un viaje a un chofer humano o a un robotaxi basándose en 11 factores: tipo de servicio, preferencia del pasajero, distancia, demanda, score de seguridad, hora, clima, zona y disponibilidad.</p>
+              <p style="margin-top:8px;"><strong>Transición Suave:</strong> Los viajes que requieren intervención humana (zonas fuera de ODD, condiciones climáticas severas, viajes con paradas múltiples) se asignan automáticamente a choferes humanos. El pasajero no nota la diferencia — misma experiencia, misma app.</p>
+              <p style="margin-top:8px;"><strong>Learning Loop:</strong> Cada viaje humano genera datos de entrenamiento para el modelo autónomo. Las decisiones de routing humano alimentan el mapa propietario y mejoran la capacidad del robotaxi semana a semana.</p>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;"><i class="fas fa-project-diagram" style="color:var(--info);"></i> Distribución de Dispatch</h3>
+            <canvas id="chart-dispatch" height="260"></canvas>
           </div>
         </div>
       </div>

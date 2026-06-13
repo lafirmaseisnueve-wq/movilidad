@@ -13,7 +13,7 @@ function showPage(id) {
   const links = document.querySelectorAll('.nav-link');
   links.forEach(l => { if (l.textContent.toLowerCase().includes(id.substring(0,4))) l.classList.add('active'); });
   // Update title
-  const titles = { dashboard:'Dashboard', livemap:'Live Map GPS', users:'Gestión de Usuarios', fleets:'Flotillas', documents:'Aprobación de Documentos', pricing:'Surge Pricing', commissions:'Comisiones y Facturación', 'incentives-admin':'Incentivos y Promociones', soc:'Centro de Seguridad (SOC)', tickets:'Tickets de Soporte', 'api-config':'APIs y Servicios', cities:'Ciudades y Geocercas', analytics:'Analytics & BI' };
+  const titles = { dashboard:'Dashboard', livemap:'Live Map GPS', users:'Gestión de Usuarios', fleets:'Flotillas', documents:'Aprobación de Documentos', pricing:'Surge Pricing', commissions:'Comisiones y Facturación', 'incentives-admin':'Incentivos y Promociones', soc:'Centro de Seguridad (SOC)', tripcheck:'TripCheck AI — Seguridad Inteligente', tickets:'Tickets de Soporte', charging:'Carga EV — Red de Estaciones', maintenance:'Mantenimiento — Centros Afiliados', financing:'Financiamiento — Soluciones Automotrices', smartcity:'Smart Cities — Infraestructura Urbana', 'traffic-ai':'Traffic AI — Predicción de Tráfico', mapping:'Mapa Propio — Cartografía Independiente', robotaxi:'Robotaxis — Conducción Autónoma', 'hybrid-dispatch':'Dispatch Híbrido — Asignación Dual', 'api-config':'APIs y Servicios', cities:'Ciudades y Geocercas', analytics:'Analytics & BI' };
   document.getElementById('page-title').textContent = titles[id] || 'Admin';
   // Init specific pages
   if (id === 'livemap') setTimeout(initAdminMap, 200);
@@ -28,6 +28,15 @@ function showPage(id) {
   if (id === 'cities') populateCities();
   if (id === 'incentives-admin') populateAdminIncentives();
   if (id === 'api-config') initApiConfigPanel();
+  if (id === 'tripcheck') initTripCheck();
+  if (id === 'charging') initCharging();
+  if (id === 'maintenance') initMaintenance();
+  if (id === 'financing') initFinancing();
+  if (id === 'smartcity') initSmartCity();
+  if (id === 'traffic-ai') initTrafficAI();
+  if (id === 'mapping') initMapping();
+  if (id === 'robotaxi') initRobotaxi();
+  if (id === 'hybrid-dispatch') initHybridDispatch();
 }
 
 // ===== DASHBOARD CHARTS =====
@@ -352,6 +361,373 @@ function toggleCity(el, name) {
   el.classList.toggle('active');
   const isActive = el.classList.contains('active');
   alert(`Ciudad ${name}: ${isActive?'HABILITADA':'DESHABILITADA'}\n\nGeocerca virtual ${isActive?'activada':'desactivada'}`);
+}
+
+// ===== TRIPCHECK AI =====
+let tripcheckInit = false;
+function initTripCheck() {
+  if (tripcheckInit) return;
+  tripcheckInit = true;
+  // TripCheck is mostly static HTML with live-looking data
+  // Add real-time simulation: update risk level periodically
+  setInterval(() => {
+    const riskBar = document.querySelector('#page-tripcheck .sc-value[style*="success"]');
+    if (riskBar) {
+      const levels = [{text:'Bajo', color:'var(--success)'}, {text:'Medio', color:'var(--warning)'}, {text:'Alto', color:'var(--danger)'}];
+      const idx = Math.random() > 0.7 ? (Math.random() > 0.5 ? 2 : 1) : 0;
+      riskBar.textContent = levels[idx].text;
+      riskBar.style.color = levels[idx].color;
+    }
+  }, 8000);
+}
+
+// ===== CHARGING EV =====
+let chargingInit = false;
+let chargingMap = null;
+function initCharging() {
+  if (chargingInit) return;
+  chargingInit = true;
+
+  // Chart: Utilization by zone
+  const ctx = document.getElementById('chart-charging');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Polanco', 'Santa Fe', 'Centro', 'Aeropuerto', 'Interlomas', 'Condesa', 'Roma Norte', 'Del Valle'],
+        datasets: [{
+          label: 'Uso %',
+          data: [87, 92, 65, 78, 45, 73, 68, 55],
+          backgroundColor: ['#7C3AED', '#A78BFA', '#6D28D9', '#8B5CF6', '#C4B5FD', '#5B21B6', '#7C3AED', '#A78BFA'],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { max: 100, grid: { color: 'rgba(0,0,0,.05)' }, ticks: { callback: v => v + '%' } }
+        }
+      }
+    });
+  }
+
+  // Map: Charging stations in CDMX
+  setTimeout(() => {
+    const mapEl = document.getElementById('map-charging');
+    if (mapEl && !chargingMap) {
+      chargingMap = L.map('map-charging', { zoomControl: true }).setView([19.4326, -99.1332], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' }).addTo(chargingMap);
+      const stations = [
+        { lat: 19.433, lng: -99.200, name: 'ESC-001 Polanco', type: 'DC 150kW ×4', avail: '1 de 4' },
+        { lat: 19.359, lng: -99.268, name: 'ESC-002 Santa Fe', type: 'DC 350kW ×2 + AC ×6', avail: '0 de 8' },
+        { lat: 19.428, lng: -99.133, name: 'ESC-003 Centro', type: 'DC 50kW ×3', avail: '2 de 3' },
+        { lat: 19.436, lng: -99.072, name: 'ESC-004 Aeropuerto', type: 'DC 150kW ×6', avail: '3 de 6' },
+        { lat: 19.421, lng: -99.279, name: 'ESC-005 Interlomas', type: 'DC 350kW ×2', avail: '2 de 2' },
+        { lat: 19.413, lng: -99.168, name: 'ESC-006 Condesa', type: 'DC 50kW ×2 + AC ×4', avail: '3 de 6' },
+        { lat: 19.418, lng: -99.158, name: 'ESC-007 Roma Norte', type: 'DC 150kW ×3', avail: '1 de 3' },
+        { lat: 19.383, lng: -99.158, name: 'ESC-008 Del Valle', type: 'AC ×8', avail: '5 de 8' }
+      ];
+      stations.forEach(s => {
+        const color = s.avail.startsWith('0') ? '#EF4444' : '#10B981';
+        L.marker([s.lat, s.lng], {
+          icon: L.divIcon({
+            className: '',
+            html: `<div style="background:${color};width:18px;height:18px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-size:9px;font-weight:900;">⚡</span></div>`,
+            iconSize: [18, 18], iconAnchor: [9, 9]
+          })
+        }).addTo(chargingMap).bindPopup(`<b>${s.name}</b><br>${s.type}<br>Disponible: ${s.avail}`);
+      });
+    }
+  }, 300);
+}
+
+// ===== MAINTENANCE =====
+let maintenanceInit = false;
+function initMaintenance() {
+  if (maintenanceInit) return;
+  maintenanceInit = true;
+
+  const ctx = document.getElementById('chart-maintenance');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Cambio de Aceite', 'Frenos', 'Alineación/Balanceo', 'Llantas', 'Diagnóstico EV', 'Filtros', 'Eléctrico', 'Suspensión'],
+        datasets: [{
+          data: [28, 18, 15, 12, 10, 8, 5, 4],
+          backgroundColor: ['#7C3AED', '#A78BFA', '#6D28D9', '#8B5CF6', '#10B981', '#C4B5FD', '#5B21B6', '#F59E0B'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'right', labels: { font: { size: 11 }, padding: 8 } }
+        },
+        cutout: '55%'
+      }
+    });
+  }
+}
+
+// ===== FINANCING =====
+let financingInit = false;
+function initFinancing() {
+  if (financingInit) return;
+  financingInit = true;
+
+  const ctx = document.getElementById('chart-financing');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Auto Ejecutivo', 'EV Green Finance', 'Flota Empresarial', 'Moto Financia', 'Refinanciamiento'],
+        datasets: [{
+          data: [42, 25, 18, 10, 5],
+          backgroundColor: ['#7C3AED', '#10B981', '#F59E0B', '#EC4899', '#3B82F6'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'right', labels: { font: { size: 11 }, padding: 8 } }
+        },
+        cutout: '55%'
+      }
+    });
+  }
+}
+
+// ===== SMART CITIES =====
+let smartcityInit = false;
+function initSmartCity() {
+  if (smartcityInit) return;
+  smartcityInit = true;
+
+  const ctx = document.getElementById('chart-smartcity');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Metro', 'Metrobús', 'Ecobici', 'Tren Ligero', 'RTP', 'Trolebús', 'Cablebús'],
+        datasets: [
+          {
+            label: 'Conexiones/día',
+            data: [42000, 28000, 15000, 8500, 6200, 4100, 3200],
+            backgroundColor: '#7C3AED',
+            borderRadius: 4
+          },
+          {
+            label: 'Conversión a app',
+            data: [18000, 12000, 11000, 4300, 2800, 1900, 2100],
+            backgroundColor: '#A78BFA',
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { grid: { color: 'rgba(0,0,0,.05)' }, ticks: { callback: v => (v/1000) + 'K' } }
+        }
+      }
+    });
+  }
+}
+
+// ===== TRAFFIC AI =====
+let trafficAIInit = false;
+function initTrafficAI() {
+  if (trafficAIInit) return;
+  trafficAIInit = true;
+
+  const hours = Array.from({length: 24}, (_, i) => `${i}:00`);
+  const flow = [12,8,5,3,4,15,45,78,82,65,48,42,50,55,48,52,68,85,72,45,30,22,18,14];
+  const predicted = flow.map(v => v + Math.floor((Math.random() - 0.3) * 8));
+
+  const ctx = document.getElementById('chart-traffic');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: hours,
+        datasets: [
+          {
+            label: 'Flujo Real',
+            data: flow,
+            borderColor: '#7C3AED',
+            backgroundColor: 'rgba(124,58,237,.15)',
+            fill: true,
+            tension: 0.4
+          },
+          {
+            label: 'Predicción IA',
+            data: predicted,
+            borderColor: '#10B981',
+            backgroundColor: 'rgba(16,185,129,.1)',
+            fill: true,
+            tension: 0.4,
+            borderDash: [5, 5]
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { grid: { color: 'rgba(0,0,0,.05)' }, ticks: { callback: v => v + 'K veh/h' } }
+        }
+      }
+    });
+  }
+}
+
+// ===== PROPRIETARY MAPPING =====
+let mappingInit = false;
+let proprietaryMap = null;
+function initMapping() {
+  if (mappingInit) return;
+  mappingInit = true;
+
+  setTimeout(() => {
+    const mapEl = document.getElementById('map-proprietary');
+    if (mapEl && !proprietaryMap) {
+      proprietaryMap = L.map('map-proprietary', { zoomControl: true }).setView([19.4326, -99.1332], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© Movilidad Maps + OSM' }).addTo(proprietaryMap);
+
+      // Show coverage polygons (simulated zones)
+      const zones = [
+        { lat: 19.4326, lng: -99.1332, name: 'Centro Histórico', km: 12, accuracy: '0.3m', updates: '8.2K/día' },
+        { lat: 19.433, lng: -99.200, name: 'Polanco', km: 8, accuracy: '0.5m', updates: '5.4K/día' },
+        { lat: 19.413, lng: -99.168, name: 'Condesa/Roma', km: 6, accuracy: '0.4m', updates: '4.1K/día' },
+        { lat: 19.359, lng: -99.268, name: 'Santa Fe', km: 10, accuracy: '0.8m', updates: '2.8K/día' },
+        { lat: 19.436, lng: -99.072, name: 'Aeropuerto', km: 5, accuracy: '0.2m', updates: '6.9K/día' }
+      ];
+
+      zones.forEach(z => {
+        L.circle([z.lat, z.lng], {
+          radius: z.km * 500,
+          color: '#7C3AED',
+          fillColor: '#7C3AED',
+          fillOpacity: 0.15,
+          weight: 2
+        }).addTo(proprietaryMap).bindPopup(
+          `<b>🗺️ ${z.name}</b><br>Área: ${z.km} km²<br>Precisión: ${z.accuracy}<br>Actualizaciones: ${z.updates}<br><em style="color:#7C3AED;">Mapa Propietario Movilidad</em>`
+        );
+      });
+
+      // Add "mapped road" polylines to show proprietary data
+      const roads = [
+        [[19.435, -99.140], [19.432, -99.135], [19.430, -99.130]],
+        [[19.440, -99.145], [19.435, -99.145], [19.430, -99.145]],
+        [[19.420, -99.160], [19.418, -99.155], [19.416, -99.150]],
+        [[19.438, -99.120], [19.436, -99.110], [19.434, -99.100]]
+      ];
+      roads.forEach(r => {
+        L.polyline(r, { color: '#7C3AED', weight: 3, opacity: 0.6 }).addTo(proprietaryMap);
+      });
+    }
+  }, 300);
+}
+
+// ===== ROBOTAXI =====
+let robotaxiInit = false;
+function initRobotaxi() {
+  if (robotaxiInit) return;
+  robotaxiInit = true;
+
+  const days = Array.from({length: 30}, (_, i) => `Día ${i+1}`);
+  const autonomousTrips = days.map(() => Math.floor(200 + Math.random() * 150));
+  const humanInterventions = days.map(() => Math.floor(Math.random() * 5));
+
+  const ctx = document.getElementById('chart-robotaxi');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: days,
+        datasets: [
+          {
+            label: 'Viajes Autónomos',
+            data: autonomousTrips,
+            borderColor: '#7C3AED',
+            backgroundColor: 'rgba(124,58,237,.15)',
+            fill: true,
+            tension: 0.4,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Intervenciones Humanas',
+            data: humanInterventions,
+            borderColor: '#EF4444',
+            backgroundColor: 'rgba(239,68,68,.1)',
+            fill: true,
+            tension: 0.4,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { type: 'linear', display: true, position: 'left', grid: { color: 'rgba(0,0,0,.05)' }, title: { display: true, text: 'Viajes' } },
+          y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Intervenciones' }, min: 0, max: 10 }
+        }
+      }
+    });
+  }
+}
+
+// ===== HYBRID DISPATCH =====
+let hybridDispatchInit = false;
+function initHybridDispatch() {
+  if (hybridDispatchInit) return;
+  hybridDispatchInit = true;
+
+  const hours = Array.from({length: 24}, (_, i) => `${i}:00`);
+  const humanAssigned = [15,8,5,3,5,20,55,85,90,70,52,48,55,58,50,55,72,90,78,50,35,25,20,18];
+  const autoAssigned = [2,1,1,0,1,3,8,15,18,12,9,8,10,11,9,10,15,20,16,8,5,4,3,3];
+
+  const ctx = document.getElementById('chart-dispatch');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: hours,
+        datasets: [
+          {
+            label: 'Chofer Humano',
+            data: humanAssigned,
+            backgroundColor: '#7C3AED',
+            borderRadius: 4
+          },
+          {
+            label: 'Robotaxi',
+            data: autoAssigned,
+            backgroundColor: '#10B981',
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, grid: { color: 'rgba(0,0,0,.05)' }, ticks: { callback: v => v + ' viajes' } }
+        }
+      }
+    });
+  }
 }
 
 // ===== INIT =====

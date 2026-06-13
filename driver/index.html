@@ -215,6 +215,13 @@
             <button class="btn btn-secondary" style="flex:1;" onclick="showScreen('screen-incentives')"><i class="fas fa-gift"></i> Bonos</button>
             <button class="btn btn-secondary" style="flex:1;" onclick="showScreen('screen-safety')"><i class="fas fa-shield-alt"></i></button>
           </div>
+          <!-- Ecosystem Quick Access -->
+          <div style="display:flex; gap:6px; margin-top:8px; overflow-x:auto; padding-bottom:4px;">
+            <div style="flex-shrink:0; background:var(--primary-50); border-radius:10px; padding:8px 12px; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; font-weight:600; color:var(--primary);" onclick="showScreen('screen-ev')"><i class="fas fa-charging-station"></i> Carga EV</div>
+            <div style="flex-shrink:0; background:#FEF3C7; border-radius:10px; padding:8px 12px; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; font-weight:600; color:#B45309;" onclick="showScreen('screen-maintenance')"><i class="fas fa-wrench"></i> Taller</div>
+            <div style="flex-shrink:0; background:#D1FAE5; border-radius:10px; padding:8px 12px; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; font-weight:600; color:#047857;" onclick="showScreen('screen-financing')"><i class="fas fa-hand-holding-usd"></i> Financia</div>
+            <div style="flex-shrink:0; background:#FEE2E2; border-radius:10px; padding:8px 12px; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; font-weight:600; color:#B91C1C;" onclick="showScreen('screen-tripcheck-driver')"><i class="fas fa-brain"></i> TripCheck</div>
+          </div>
         </div>
 
         <div class="driver-nav">
@@ -568,6 +575,268 @@
           <div class="doc-item">
             <div class="doc-icon pending"><i class="fas fa-clock"></i></div>
             <div class="doc-info"><h5>Póliza de seguro</h5><p>Renovación pendiente</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 8: EV CHARGING ========== -->
+      <div class="screen hidden-right" id="screen-ev">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div style="padding:36px 20px 20px; overflow-y:auto; height:calc(100% - 36px);">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+            <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-map', 'left')"></i>
+            <h3 style="font-size:20px; font-weight:800; flex:1;">⚡ Carga EV</h3>
+          </div>
+          <!-- Battery Status -->
+          <div style="background:var(--primary-50); border-radius:16px; padding:16px; margin-bottom:16px; text-align:center;">
+            <div style="font-size:48px; font-weight:900; color:var(--primary);">67%</div>
+            <div style="height:8px; background:var(--border); border-radius:4px; overflow:hidden; margin:8px 0;">
+              <div style="height:100%; width:67%; background: linear-gradient(90deg, var(--primary), #A78BFA); border-radius:4px;"></div>
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary);">Autonomía estimada: 189 km · Suficiente para 4.5 horas</div>
+          </div>
+          <!-- Nearest Stations -->
+          <h4 style="font-size:14px; font-weight:700; margin-bottom:10px;">Estaciones Cercanas</h4>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+            <div style="padding:12px; border:1px solid var(--border); border-radius:12px; display:flex; align-items:center; gap:10px;" onclick="alert('Navegando a ESC-001 Polanco\nDC 150kW · 1 de 4 disponible\nETA: 5 min')">
+              <div style="width:36px; height:36px; border-radius:10px; background:#D1FAE5; display:flex; align-items:center; justify-content:center;">⚡</div>
+              <div style="flex:1;">
+                <div style="font-size:13px; font-weight:700;">ESC-001 Polanco</div>
+                <div style="font-size:11px; color:var(--text-secondary);">DC 150kW · 1 de 4 libre · 0.8 km</div>
+              </div>
+              <div style="font-size:11px; color:var(--success); font-weight:700;">Disponible</div>
+            </div>
+            <div style="padding:12px; border:1px solid var(--border); border-radius:12px; display:flex; align-items:center; gap:10px;" onclick="alert('ESC-003 Centro · DC 50kW · 2 de 3 libre · ETA: 8 min')">
+              <div style="width:36px; height:36px; border-radius:10px; background:#D1FAE5; display:flex; align-items:center; justify-content:center;">⚡</div>
+              <div style="flex:1;">
+                <div style="font-size:13px; font-weight:700;">ESC-003 Centro</div>
+                <div style="font-size:11px; color:var(--text-secondary);">DC 50kW · 2 de 3 libre · 2.1 km</div>
+              </div>
+              <div style="font-size:11px; color:var(--success); font-weight:700;">Disponible</div>
+            </div>
+            <div style="padding:12px; border:1px solid var(--border); border-radius:12px; display:flex; align-items:center; gap:10px; opacity:0.6;" onclick="alert('ESC-002 Santa Fe · Llena · Espera ~15 min')">
+              <div style="width:36px; height:36px; border-radius:10px; background:#FEE2E2; display:flex; align-items:center; justify-content:center;">⚡</div>
+              <div style="flex:1;">
+                <div style="font-size:13px; font-weight:700;">ESC-002 Santa Fe</div>
+                <div style="font-size:11px; color:var(--text-secondary);">DC 350kW · 0 de 8 libre · 3.5 km</div>
+              </div>
+              <div style="font-size:11px; color:var(--danger); font-weight:700;">Llena</div>
+            </div>
+          </div>
+          <!-- Reserve Charger -->
+          <button class="btn btn-primary" style="width:100%; padding:14px; border-radius:16px; font-size:14px; font-weight:700;" onclick="alert('✅ Cargador reservado en ESC-001 Polanco\n\nConnector #3 · DC 150kW\nTiempo estimado de carga: 25 min\nCosto: $120 MXN (20% descuento socio)')">
+            <i class="fas fa-charging-station"></i> Reservar Cargador
+          </button>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 9: MAINTENANCE ========== -->
+      <div class="screen hidden-right" id="screen-maintenance">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div style="padding:36px 20px 20px; overflow-y:auto; height:calc(100% - 36px);">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+            <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-map', 'left')"></i>
+            <h3 style="font-size:20px; font-weight:800; flex:1;">🔧 Mantenimiento</h3>
+          </div>
+          <!-- Vehicle Health -->
+          <div style="background:var(--primary-50); border-radius:16px; padding:16px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:13px; font-weight:700;">Salud del Vehículo</span>
+              <span style="font-size:13px; font-weight:800; color:var(--success);">✅ Buena</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div style="background:#fff; border-radius:8px; padding:8px; text-align:center;">
+                <div style="font-size:18px; font-weight:800; color:var(--primary);">12,400</div>
+                <div style="font-size:10px; color:var(--text-secondary);">km recorrido</div>
+              </div>
+              <div style="background:#fff; border-radius:8px; padding:8px; text-align:center;">
+                <div style="font-size:18px; font-weight:800; color:var(--warning);">1,600</div>
+                <div style="font-size:10px; color:var(--text-secondary);">km próximo servicio</div>
+              </div>
+            </div>
+          </div>
+          <!-- Service Packages -->
+          <h4 style="font-size:14px; font-weight:700; margin-bottom:10px;">Paquetes Disponibles</h4>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+            <div style="padding:12px; border:2px solid var(--primary); border-radius:12px; cursor:pointer;" onclick="alert('Paquete Básico seleccionado\n$499/mes · Cada 10K km\n✅ Aceite, filtros, frenos, llantas, niveles')">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:13px; font-weight:700;">🛢️ Básico</span>
+                <span style="font-size:13px; font-weight:800; color:var(--primary);">$499/mes</span>
+              </div>
+              <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">Cada 10K km: Aceite, filtros, revisión frenos, llantas, niveles</div>
+            </div>
+            <div style="padding:12px; border:1px solid var(--border); border-radius:12px; cursor:pointer;" onclick="alert('Paquete Preventivo Plus seleccionado\n$899/mes · Cada 5K km\n✅ Todo Básico + alineación, balanceo, diagnóstico')">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:13px; font-weight:700;">⚙️ Preventivo Plus</span>
+                <span style="font-size:13px; font-weight:800; color:var(--warning);">$899/mes</span>
+              </div>
+              <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">Cada 5K km: Todo Básico + alineación, balanceo, diagnóstico computarizado</div>
+            </div>
+            <div style="padding:12px; border:1px solid var(--border); border-radius:12px; cursor:pointer;" onclick="alert('Paquete Premium EV seleccionado\n$1,299/mes · Exclusivo EV\n✅ Diagnóstico batería, software, cabin filter, llantas EV')">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:13px; font-weight:700;">⚡ Premium EV</span>
+                <span style="font-size:13px; font-weight:800; color:var(--success);">$1,299/mes</span>
+              </div>
+              <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">Exclusivo EV: Diagnóstico batería, software update, cabin filter, llantas EV</div>
+            </div>
+          </div>
+          <!-- Schedule -->
+          <button class="btn btn-primary" style="width:100%; padding:14px; border-radius:16px; font-size:14px; font-weight:700;" onclick="alert('📅 Agendando servicio en:\n\nTaller Automotriz Polanco\nAv. Homero 423, Polanco\nFecha: Jueves 15, 10:00 AM\nServicio: Básico 10K km\nCosto con 32% descuento: $339 MXN')">
+            <i class="fas fa-calendar-alt"></i> Agendar Servicio
+          </button>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 10: FINANCING ========== -->
+      <div class="screen hidden-right" id="screen-financing">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div style="padding:36px 20px 20px; overflow-y:auto; height:calc(100% - 36px);">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+            <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-map', 'left')"></i>
+            <h3 style="font-size:20px; font-weight:800; flex:1;">💰 Financiamiento</h3>
+          </div>
+          <!-- My Vehicle Status -->
+          <div style="background:var(--primary-50); border-radius:16px; padding:16px; margin-bottom:16px;">
+            <div style="font-size:13px; font-weight:700; margin-bottom:10px;">Mi Financiamiento Activo</div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+              <span>Programa</span><span style="font-weight:600;">Auto Ejecutivo</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+              <span>Vehículo</span><span style="font-weight:600;">Nissan Versa 2024</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+              <span>Mensualidad</span><span style="font-weight:600; color:var(--primary);">$4,850/mes</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+              <span>Saldo pendiente</span><span style="font-weight:600;">$142,800</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
+              <span>Plazo restante</span><span style="font-weight:600;">29 de 48 meses</span>
+            </div>
+            <div style="height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-top:10px;">
+              <div style="height:100%; width:40%; background:var(--primary); border-radius:3px;"></div>
+            </div>
+            <div style="font-size:10px; color:var(--text-secondary); margin-top:4px; text-align:right;">40% pagado</div>
+          </div>
+          <!-- Payment History -->
+          <h4 style="font-size:14px; font-weight:700; margin-bottom:10px;">Últimos Pagos</h4>
+          <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; padding:8px 12px; background:var(--surface); border-radius:8px; font-size:12px;">
+              <span>Jun 2024</span><span style="font-weight:600; color:var(--success);">✅ $4,850</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 12px; background:var(--surface); border-radius:8px; font-size:12px;">
+              <span>May 2024</span><span style="font-weight:600; color:var(--success);">✅ $4,850</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 12px; background:var(--surface); border-radius:8px; font-size:12px;">
+              <span>Abr 2024</span><span style="font-weight:600; color:var(--success);">✅ $4,850</span>
+            </div>
+          </div>
+          <!-- Other Programs -->
+          <h4 style="font-size:14px; font-weight:700; margin-bottom:10px;">Otros Programas</h4>
+          <div style="padding:12px; border:1px solid var(--border); border-radius:12px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; font-weight:700;">⚡ EV Green Finance</span>
+              <span class="badge badge-primary" style="font-size:10px;">Nuevo</span>
+            </div>
+            <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">Enganche $0 · Tasa 6.5% · 60 meses · Solo vehículos eléctricos</div>
+          </div>
+          <button class="btn btn-secondary" style="width:100%; padding:12px; border-radius:16px; font-size:13px; font-weight:600;" onclick="alert('Pre-aprobación para EV Green Finance\n\n✅ Calificas con tu historial de 4.7★ y 19 meses de antigüedad\nVehículos disponibles: BYD Dolphin, JAC E10X, MG4\nTasa subsidiada: 6.5% · Enganche: $0')">
+            <i class="fas fa-leaf"></i> Pre-aprobarme para EV Green
+          </button>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 11: TRIPCHECK DRIVER ========== -->
+      <div class="screen hidden-right" id="screen-tripcheck-driver">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div style="padding:36px 20px 20px; overflow-y:auto; height:calc(100% - 36px);">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+            <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-map', 'left')"></i>
+            <h3 style="font-size:20px; font-weight:800; flex:1;">🧠 TripCheck</h3>
+          </div>
+          <!-- Safety Score -->
+          <div style="background:var(--primary-50); border-radius:16px; padding:16px; margin-bottom:16px; text-align:center;">
+            <div style="font-size:14px; font-weight:600; margin-bottom:6px;">Tu Score de Seguridad</div>
+            <div style="font-size:48px; font-weight:900; color:var(--success);">9.2</div>
+            <div style="font-size:12px; color:var(--text-secondary);">de 10 · Excelente</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:12px;">
+              <div style="background:#fff; border-radius:8px; padding:8px; text-align:center;">
+                <div style="font-size:16px; font-weight:800; color:var(--success);">0</div>
+                <div style="font-size:9px; color:var(--text-secondary);">Desvíos</div>
+              </div>
+              <div style="background:#fff; border-radius:8px; padding:8px; text-align:center;">
+                <div style="font-size:16px; font-weight:800; color:var(--success);">0</div>
+                <div style="font-size:9px; color:var(--text-secondary);">Excesos velocidad</div>
+              </div>
+              <div style="background:#fff; border-radius:8px; padding:8px; text-align:center;">
+                <div style="font-size:16px; font-weight:800; color:var(--primary);">4</div>
+                <div style="font-size:9px; color:var(--text-secondary);">Frenados bruscos</div>
+              </div>
+            </div>
+          </div>
+          <!-- TripCheck Features -->
+          <h4 style="font-size:14px; font-weight:700; margin-bottom:10px;">Monitoreo Activo</h4>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+            <div style="padding:10px; background:#D1FAE5; border-radius:10px; display:flex; align-items:center; gap:10px;">
+              <i class="fas fa-route" style="color:var(--success); font-size:16px;"></i>
+              <div style="flex:1;">
+                <div style="font-size:12px; font-weight:700;">Desvío de Ruta</div>
+                <div style="font-size:10px; color:var(--text-secondary);">Detecta si te desvías más de 300m de la ruta óptima</div>
+              </div>
+              <span class="badge badge-success" style="font-size:9px;">ACTIVO</span>
+            </div>
+            <div style="padding:10px; background:#D1FAE5; border-radius:10px; display:flex; align-items:center; gap:10px;">
+              <i class="fas fa-tachometer-alt" style="color:var(--success); font-size:16px;"></i>
+              <div style="flex:1;">
+                <div style="font-size:12px; font-weight:700;">Alerta de Velocidad</div>
+                <div style="font-size:10px; color:var(--text-secondary);">Notifica si excedes el límite de velocidad por zona</div>
+              </div>
+              <span class="badge badge-success" style="font-size:9px;">ACTIVO</span>
+            </div>
+            <div style="padding:10px; background:#D1FAE5; border-radius:10px; display:flex; align-items:center; gap:10px;">
+              <i class="fas fa-user-shield" style="color:var(--success); font-size:16px;"></i>
+              <div style="flex:1;">
+                <div style="font-size:12px; font-weight:700;">Validación Humana</div>
+                <div style="font-size:10px; color:var(--text-secondary);">Un experto revisa si la IA detecta comportamiento anómalo</div>
+              </div>
+              <span class="badge badge-success" style="font-size:9px;">ACTIVO</span>
+            </div>
+            <div style="padding:10px; background:#FEF3C7; border-radius:10px; display:flex; align-items:center; gap:10px;">
+              <i class="fas fa-car-crash" style="color:var(--warning); font-size:16px;"></i>
+              <div style="flex:1;">
+                <div style="font-size:12px; font-weight:700;">Detección de Incidentes</div>
+                <div style="font-size:10px; color:var(--text-secondary);">Auto-SOS si detecta impacto o frenado brusco extremo</div>
+              </div>
+              <span class="badge badge-warning" style="font-size:9px;">BETA</span>
+            </div>
+          </div>
+          <!-- Recent Alerts -->
+          <h4 style="font-size:14px; font-weight:700; margin-bottom:10px;">Alertas Recientes</h4>
+          <div style="padding:10px; background:var(--primary-50); border-radius:10px; font-size:12px; margin-bottom:6px;">
+            <div style="display:flex; justify-content:space-between;">
+              <span style="font-weight:600;">Frenado brusco detectado</span>
+              <span style="color:var(--text-light); font-size:10px;">Hoy 14:32</span>
+            </div>
+            <div style="color:var(--text-secondary); font-size:11px; margin-top:2px;">Circuito Interior · 42 km/h · Desaceleración 8.2 m/s²</div>
+          </div>
+          <div style="padding:10px; background:#D1FAE5; border-radius:10px; font-size:12px;">
+            <div style="display:flex; justify-content:space-between;">
+              <span style="font-weight:600;">Ruta alternativa aprobada</span>
+              <span style="color:var(--text-light); font-size:10px;">Hoy 11:15</span>
+            </div>
+            <div style="color:var(--text-secondary); font-size:11px; margin-top:2px;">Desvío justificado por tráfico en Eje Central · Auto-aprobado por IA</div>
           </div>
         </div>
       </div>
