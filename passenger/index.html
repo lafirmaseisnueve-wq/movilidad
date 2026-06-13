@@ -443,6 +443,11 @@
               <h5>TripCheck</h5>
               <p>Monitoreo de desvíos</p>
             </div>
+            <div class="safety-card" onclick="showScreen('screen-ine-verify')">
+              <i class="fas fa-id-card"></i>
+              <h5>Verificar INE</h5>
+              <p>Confirma tu identidad</p>
+            </div>
             <div class="safety-card">
               <i class="fas fa-user-shield"></i>
               <h5>Llamadas Enmascaradas</h5>
@@ -1090,9 +1095,112 @@
   </div>
 </div>
 
+<!-- ========== SCREEN: INE VERIFICATION (Didit) ========== -->
+<div class="screen hidden-right" id="screen-ine-verify">
+  <div class="sbar"><span>9:41</span><span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span></div>
+  <div style="padding:36px 20px 20px; overflow-y:auto; height:calc(100% - 36px);">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-home', 'left')"></i>
+      <h3 style="font-size:20px; font-weight:800;">🛡️ Verificar INE</h3>
+    </div>
+
+    <!-- Verification Status Banner -->
+    <div id="ine-status-banner" style="background:linear-gradient(135deg,#7C3AED,#5B21B6); border-radius:16px; padding:20px; margin-bottom:16px; color:white; text-align:center;">
+      <div style="font-size:36px; margin-bottom:8px;">🪪</div>
+      <div style="font-size:16px; font-weight:800;">Verificación de Identidad</div>
+      <div style="font-size:12px; opacity:.9; margin-top:4px;">Valida tu credencial INE contra el registro del INE</div>
+    </div>
+
+    <!-- Verification Method Selector -->
+    <div style="font-size:13px; font-weight:700; margin-bottom:10px;">Método de verificación</div>
+    <div style="display:flex; gap:10px; margin-bottom:16px;">
+      <div id="ine-method-registry" class="ride-cat selected" style="flex:1; border:2px solid var(--primary); border-radius:12px; padding:14px; text-align:center; cursor:pointer;" onclick="selectINEMethod('registry')">
+        <div style="font-size:20px;">🏛️</div>
+        <div style="font-size:11px; font-weight:700;">Registro INE</div>
+        <div style="font-size:9px; color:var(--text-light);">Consulta directa</div>
+      </div>
+      <div id="ine-method-session" class="ride-cat" style="flex:1; border:2px solid var(--border); border-radius:12px; padding:14px; text-align:center; cursor:pointer;" onclick="selectINEMethod('session')">
+        <div style="font-size:20px;">📸</div>
+        <div style="font-size:11px; font-weight:700;">Sesión KYC</div>
+        <div style="font-size:9px; color:var(--text-light);">Foto + OCR</div>
+      </div>
+    </div>
+
+    <!-- Registry Verification Form -->
+    <div id="ine-registry-form" style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px;">
+      <div style="font-size:13px; font-weight:700; margin-bottom:12px;">Datos de la credencial INE</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div>
+          <label style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:3px;">Clave de Elector (OCR)</label>
+          <input type="text" id="ine-ocr" placeholder="Ej: 1234567890123" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
+        </div>
+        <div>
+          <label style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:3px;">Número de Elector</label>
+          <input type="text" id="ine-voter-number" placeholder="Ej: 123456789" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:3px;">Nombre</label>
+            <input type="text" id="ine-first-name" placeholder="Nombre(s)" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:3px;">Apellido</label>
+            <input type="text" id="ine-last-name" placeholder="Apellido(s)" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:3px;">Fecha de nacimiento</label>
+            <input type="date" id="ine-dob" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:3px;">CIC</label>
+            <input type="text" id="ine-cic" placeholder="CIC" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:3px;">Número de emisión</label>
+          <input type="text" id="ine-emission" placeholder="Ej: 01" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
+        </div>
+      </div>
+      <button id="ine-verify-btn" class="btn btn-primary btn-block btn-lg" style="margin-top:14px;" onclick="verifyPassengerINE()">
+        <i class="fas fa-shield-alt"></i> Verificar INE
+      </button>
+    </div>
+
+    <!-- Session KYC Form (hidden by default) -->
+    <div id="ine-session-form" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px;">
+      <div style="font-size:13px; font-weight:700; margin-bottom:8px;">Verificación con selfie y OCR</div>
+      <div style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">Se abrirá una sesión de verificación donde tomarás foto de tu INE por ambos lados y una selfie. Powered by <strong>Didit</strong>.</div>
+      <button class="btn btn-primary btn-block btn-lg" onclick="startPassengerKYC()">
+        <i class="fas fa-camera"></i> Iniciar verificación
+      </button>
+    </div>
+
+    <!-- Verification Results (hidden by default) -->
+    <div id="ine-results" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <div id="ine-result-icon" style="width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px;"></div>
+        <div>
+          <div id="ine-result-title" style="font-size:15px; font-weight:800;"></div>
+          <div id="ine-result-subtitle" style="font-size:11px; color:var(--text-secondary);"></div>
+        </div>
+      </div>
+      <div id="ine-result-details" style="font-size:12px; color:var(--text-secondary);"></div>
+    </div>
+
+    <!-- Info Footer -->
+    <div style="font-size:11px; color:var(--text-light); text-align:center; padding:8px;">
+      <i class="fas fa-lock"></i> Tus datos son procesados de forma segura por Didit<br>
+      <span style="opacity:.7;">Verificación contra el Registro Federal de Electores del INE</span>
+    </div>
+  </div>
+</div>
+
 <script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
 
     <script src="../js/api.js"></script>
+    <script src="../js/didit-verify.js"></script>
   <script>
     // ===== SCREEN NAVIGATION =====
     let currentScreen = 'screen-home';
@@ -1471,6 +1579,126 @@
 
     function sendReceiptEmail() {
       alert('📧 Recibo enviado a tu email registrado');
+    }
+
+    // ===== DIDIT INE VERIFICATION =====
+    let ineMethod = 'registry';
+
+    function selectINEMethod(method) {
+      ineMethod = method;
+      document.getElementById('ine-method-registry').style.border = method === 'registry' ? '2px solid var(--primary)' : '2px solid var(--border)';
+      document.getElementById('ine-method-session').style.border = method === 'session' ? '2px solid var(--primary)' : '2px solid var(--border)';
+      document.getElementById('ine-method-registry').classList.toggle('selected', method === 'registry');
+      document.getElementById('ine-method-session').classList.toggle('selected', method === 'session');
+      document.getElementById('ine-registry-form').style.display = method === 'registry' ? 'block' : 'none';
+      document.getElementById('ine-session-form').style.display = method === 'session' ? 'block' : 'none';
+      document.getElementById('ine-results').style.display = 'none';
+    }
+
+    async function verifyPassengerINE() {
+      const btn = document.getElementById('ine-verify-btn');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+      btn.disabled = true;
+
+      const ineData = {
+        ocr: document.getElementById('ine-ocr').value.trim(),
+        voter_number: document.getElementById('ine-voter-number').value.trim(),
+        first_name: document.getElementById('ine-first-name').value.trim(),
+        last_name: document.getElementById('ine-last-name').value.trim(),
+        date_of_birth: document.getElementById('ine-dob').value,
+        cic: document.getElementById('ine-cic').value.trim(),
+        emission_number: document.getElementById('ine-emission').value.trim()
+      };
+
+      if (!ineData.ocr && !ineData.voter_number && !ineData.cic) {
+        alert('⚠️ Ingresa al menos la Clave de Elector (OCR), Número de Elector o CIC');
+        btn.innerHTML = '<i class="fas fa-shield-alt"></i> Verificar INE';
+        btn.disabled = false;
+        return;
+      }
+
+      try {
+        const result = await DiditVerify.verifyPassengerINE(ineData);
+        showINEVerificationResult(result);
+      } catch (error) {
+        console.error('INE verification error:', error);
+        showINEVerificationResult({ success: false, error: error.message || 'Error al verificar INE' });
+      }
+
+      btn.innerHTML = '<i class="fas fa-shield-alt"></i> Verificar INE';
+      btn.disabled = false;
+    }
+
+    async function startPassengerKYC() {
+      try {
+        const result = await DiditVerify.startHostedVerification('passenger');
+        if (result && result.url) {
+          // Open in iframe overlay
+          DiditVerify.openVerificationIframe(result.url, result.session_token);
+        } else if (result && result.error) {
+          alert('⚠️ ' + result.error);
+        }
+      } catch (error) {
+        console.error('KYC session error:', error);
+        alert('⚠️ Error al crear sesión de verificación: ' + error.message);
+      }
+    }
+
+    function showINEVerificationResult(result) {
+      const resultsDiv = document.getElementById('ine-results');
+      const iconDiv = document.getElementById('ine-result-icon');
+      const titleDiv = document.getElementById('ine-result-title');
+      const subtitleDiv = document.getElementById('ine-result-subtitle');
+      const detailsDiv = document.getElementById('ine-result-details');
+
+      resultsDiv.style.display = 'block';
+
+      if (result.success) {
+        iconDiv.style.background = '#D1FAE5';
+        iconDiv.innerHTML = '✅';
+        titleDiv.textContent = 'INE Verificada';
+        titleDiv.style.color = '#059669';
+        subtitleDiv.textContent = 'Tu identidad ha sido confirmada contra el registro del INE';
+        detailsDiv.innerHTML = `
+          <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:8px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>Estado</span><span style="color:#059669; font-weight:700;">Válida ✓</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>Vigencia</span><span style="font-weight:600;">${result.data?.valid_until || 'Confirmada'}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span>Verificado</span><span style="font-weight:600;">${new Date().toLocaleDateString('es-MX')}</span>
+            </div>
+          </div>
+        `;
+        // Update the status banner
+        document.getElementById('ine-status-banner').style.background = 'linear-gradient(135deg,#10B981,#059669)';
+        document.getElementById('ine-status-banner').innerHTML = `
+          <div style="font-size:36px; margin-bottom:8px;">✅</div>
+          <div style="font-size:16px; font-weight:800;">Identidad Verificada</div>
+          <div style="font-size:12px; opacity:.9; margin-top:4px;">Tu INE ha sido validada exitosamente</div>
+        `;
+      } else {
+        iconDiv.style.background = '#FEE2E2';
+        iconDiv.innerHTML = '❌';
+        titleDiv.textContent = 'Verificación Fallida';
+        titleDiv.style.color = '#DC2626';
+        subtitleDiv.textContent = 'No se pudo validar la credencial INE';
+        detailsDiv.innerHTML = `
+          <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:8px;">
+            <div style="font-size:12px; color:var(--text-secondary);">
+              ${result.error || 'Los datos proporcionados no coinciden con el registro del INE. Verifica tu información e intenta de nuevo.'}
+            </div>
+          </div>
+        `;
+        document.getElementById('ine-status-banner').style.background = 'linear-gradient(135deg,#EF4444,#DC2626)';
+        document.getElementById('ine-status-banner').innerHTML = `
+          <div style="font-size:36px; margin-bottom:8px;">❌</div>
+          <div style="font-size:16px; font-weight:800;">Verificación No Exitosa</div>
+          <div style="font-size:12px; opacity:.9; margin-top:4px;">Revisa tus datos e intenta de nuevo</div>
+        `;
+      }
     }
   </script>
 </body>
