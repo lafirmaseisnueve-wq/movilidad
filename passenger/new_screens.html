@@ -1,0 +1,379 @@
+<!-- PREMIER LUXURY FLOW -->
+<div class="screen hidden-right" id="screen-premier">
+  <div class="sbar"><span>9:41</span><span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span></div>
+  <div style="padding:36px 20px 100px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-ride', 'left')"></i>
+      <h3 style="font-size:20px; font-weight:800;">✨ Premier</h3>
+    </div>
+    <!-- Vehicle Selection -->
+    <div style="background:linear-gradient(135deg,#7C3AED,#5B21B6); border-radius:16px; padding:20px; margin-bottom:16px; color:white;">
+      <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; opacity:.8; margin-bottom:8px;">Vehículo Premium</div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:18px; font-weight:800;">Mercedes E-Class</div>
+          <div style="font-size:12px; opacity:.9; margin-top:4px;">Chofer profesional · Agua · WiFi</div>
+        </div>
+        <div style="font-size:32px;">🚗</div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+      <div class="ride-cat selected" style="border:2px solid var(--primary); border-radius:12px; padding:14px; text-align:center;" onclick="selectPremierVehicle(this,'e-class')">
+        <div style="font-size:24px;">🚗</div>
+        <div style="font-size:12px; font-weight:700;">E-Class</div>
+        <div style="font-size:11px; color:var(--text-light);">$320 MXN</div>
+      </div>
+      <div class="ride-cat" style="border:2px solid var(--border); border-radius:12px; padding:14px; text-align:center;" onclick="selectPremierVehicle(this,'s-class')">
+        <div style="font-size:24px;">🚘</div>
+        <div style="font-size:12px; font-weight:700;">S-Class</div>
+        <div style="font-size:11px; color:var(--text-light);">$580 MXN</div>
+      </div>
+      <div class="ride-cat" style="border:2px solid var(--border); border-radius:12px; padding:14px; text-align:center;" onclick="selectPremierVehicle(this,'suv')">
+        <div style="font-size:24px;">🚙</div>
+        <div style="font-size:12px; font-weight:700;">GLC SUV</div>
+        <div style="font-size:11px; color:var(--text-light);">$420 MXN</div>
+      </div>
+      <div class="ride-cat" style="border:2px solid var(--border); border-radius:12px; padding:14px; text-align:center;" onclick="selectPremierVehicle(this,'van')">
+        <div style="font-size:24px;">🚐</div>
+        <div style="font-size:12px; font-weight:700;">V-Class</div>
+        <div style="font-size:11px; color:var(--text-light);">$680 MXN</div>
+      </div>
+    </div>
+    <!-- Professional Driver -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:16px;">
+      <div style="font-size:12px; font-weight:700; margin-bottom:10px;">👨‍✈️ Chofer Profesional Asignado</div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:48px; height:48px; border-radius:50%; background:var(--primary-100); display:flex; align-items:center; justify-content:center; font-size:22px;">👨‍💼</div>
+        <div style="flex:1;">
+          <div style="font-size:14px; font-weight:700;">Carlos M. · 4.97 ★</div>
+          <div style="font-size:11px; color:var(--text-light);">5 años experiencia · 12K+ viajes</div>
+        </div>
+        <div style="font-size:11px; color:var(--success); font-weight:600;">Verificado</div>
+      </div>
+    </div>
+    <!-- Premium Features -->
+    <div style="background:#F5F3FF; border-radius:12px; padding:14px; margin-bottom:20px;">
+      <div style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--primary);">Incluido en Premier</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px;">
+        <div>💧 Agua mineral</div><div>📶 WiFi gratis</div>
+        <div>📱 Cargador USB-C</div><div>📰 Prensa diaria</div>
+        <div>🎵 Música ambiente</div><div>🧹 Interior limpio</div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block btn-lg" onclick="requestPremierRide()">Solicitar Premier · $320</button>
+  </div>
+</div>
+
+<!-- INTERCITY FLOW -->
+<div class="screen hidden-right" id="screen-intercity">
+  <div class="sbar"><span>9:41</span><span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span></div>
+  <div style="padding:36px 20px 100px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-ride', 'left')"></i>
+      <h3 style="font-size:20px; font-weight:800;">🛣️ Intercity</h3>
+    </div>
+    <!-- Route Selection -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:16px;">
+      <div style="display:flex; gap:12px; align-items:stretch;">
+        <div style="display:flex; flex-direction:column; align-items:center; padding:4px 0;">
+          <div style="width:10px; height:10px; border-radius:50%; background:var(--primary);"></div>
+          <div style="flex:1; width:2px; background:var(--border);"></div>
+          <div style="width:10px; height:10px; border-radius:50%; background:var(--danger);"></div>
+        </div>
+        <div style="flex:1;">
+          <div style="padding:8px 0; border-bottom:1px solid var(--border);">
+            <div style="font-size:11px; color:var(--text-light);">Origen</div>
+            <div style="font-size:14px; font-weight:600;">CDMX — Polanco</div>
+          </div>
+          <div style="padding:8px 0;">
+            <div style="font-size:11px; color:var(--text-light);">Destino</div>
+            <div style="font-size:14px; font-weight:600;">Querétaro — Centro</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:flex; justify-content:space-between; font-size:12px;">
+        <span>📍 Distancia: <strong>218 km</strong></span>
+        <span>⏱ Tiempo est: <strong>2h 45min</strong></span>
+      </div>
+    </div>
+    <!-- Departure Options -->
+    <div style="font-size:13px; font-weight:700; margin-bottom:10px;">Horarios de Salida</div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+      <div style="background:var(--primary); color:white; padding:8px 14px; border-radius:20px; font-size:12px; font-weight:600;">06:00 AM</div>
+      <div style="background:var(--primary-100); color:var(--primary); padding:8px 14px; border-radius:20px; font-size:12px; font-weight:600;">09:00 AM</div>
+      <div style="background:var(--primary-100); color:var(--primary); padding:8px 14px; border-radius:20px; font-size:12px; font-weight:600;">12:00 PM</div>
+      <div style="background:var(--primary-100); color:var(--primary); padding:8px 14px; border-radius:20px; font-size:12px; font-weight:600;">03:00 PM</div>
+      <div style="background:var(--primary-100); color:var(--primary); padding:8px 14px; border-radius:20px; font-size:12px; font-weight:600;">06:00 PM</div>
+    </div>
+    <!-- Vehicle Type -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+      <div style="background:#F5F3FF; border:2px solid var(--primary); border-radius:12px; padding:14px; text-align:center;">
+        <div style="font-size:24px;">🚗</div>
+        <div style="font-size:12px; font-weight:700;">Sedán</div>
+        <div style="font-size:14px; font-weight:800; color:var(--primary); margin-top:4px;">$580</div>
+      </div>
+      <div style="background:var(--surface); border:2px solid var(--border); border-radius:12px; padding:14px; text-align:center;">
+        <div style="font-size:24px;">🚐</div>
+        <div style="font-size:12px; font-weight:700;">Van Compartida</div>
+        <div style="font-size:14px; font-weight:800; color:var(--primary); margin-top:4px;">$320</div>
+      </div>
+    </div>
+    <!-- Safety Info -->
+    <div style="background:#FEF3C7; border-radius:12px; padding:14px; margin-bottom:20px; font-size:11px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <span style="font-size:16px;">🛡️</span>
+        <span style="font-weight:700; color:#92400E;">Seguridad Intercity</span>
+      </div>
+      <div style="color:#78350F;">Ruta monitoreada con TripCheck AI · Puntos de descanso cada 80km · Seguro de viaje incluido</div>
+    </div>
+    <button class="btn btn-primary btn-block btn-lg" onclick="requestIntercityRide()">Reservar Intercity · $580</button>
+  </div>
+</div>
+
+<!-- PON TU PRECIO (NEGOTIATION) -->
+<div class="screen hidden-right" id="screen-pon-precio">
+  <div class="sbar"><span>9:41</span><span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span></div>
+  <div style="padding:36px 20px 100px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-ride', 'left')"></i>
+      <h3 style="font-size:20px; font-weight:800;">💰 Pon tu Precio</h3>
+    </div>
+    <!-- Price Suggestion -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:16px;">
+      <div style="font-size:12px; color:var(--text-light); margin-bottom:4px;">Precio sugerido</div>
+      <div style="font-size:32px; font-weight:800; color:var(--primary);">$92</div>
+      <div style="font-size:11px; color:var(--text-light); margin-top:4px;">Basado en demanda actual y distancia</div>
+    </div>
+    <!-- Your Offer -->
+    <div style="background:#F5F3FF; border-radius:12px; padding:16px; margin-bottom:16px;">
+      <div style="font-size:13px; font-weight:700; margin-bottom:10px;">Tu oferta</div>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <button style="width:40px; height:40px; border-radius:50%; border:2px solid var(--primary); background:transparent; font-size:18px; font-weight:700; color:var(--primary); cursor:pointer;" onclick="adjustOffer(-10)">−</button>
+        <div style="flex:1; text-align:center;">
+          <input type="number" id="pon-precio-value" value="92" style="font-size:36px; font-weight:800; color:var(--primary); text-align:center; border:none; background:transparent; width:100%; outline:none;">
+        </div>
+        <button style="width:40px; height:40px; border-radius:50%; border:2px solid var(--primary); background:transparent; font-size:18px; font-weight:700; color:var(--primary); cursor:pointer;" onclick="adjustOffer(10)">+</button>
+      </div>
+      <!-- Price Range Bar -->
+      <div style="position:relative; height:6px; background:var(--border); border-radius:3px; margin:20px 0 8px;">
+        <div style="position:absolute; left:15%; right:25%; height:100%; background:var(--success); border-radius:3px; opacity:.4;"></div>
+        <div style="position:absolute; left:40%; right:40%; height:100%; background:var(--primary); border-radius:3px;"></div>
+        <div style="position:absolute; left:75%; right:10%; height:100%; background:var(--warning); border-radius:3px; opacity:.4;"></div>
+        <div id="pon-precio-marker" style="position:absolute; left:47%; top:-6px; width:18px; height:18px; border-radius:50%; background:var(--primary); border:3px solid white; box-shadow:0 2px 6px rgba(0,0,0,.2); transform:translateX(-50%); transition:left .3s;"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-light);">
+        <span>$50</span><span style="color:var(--success);">Buena oferta</span><span style="color:var(--primary);">Justa</span><span style="color:var(--warning);">Alta</span><span>$180</span>
+      </div>
+    </div>
+    <!-- Driver Response Simulation -->
+    <div id="pon-precio-status" style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:20px;">
+      <div style="font-size:12px; font-weight:700; margin-bottom:8px;">Respuesta de choferes</div>
+      <div style="display:flex; align-items:center; gap:10px; padding:10px; background:#FEF3C7; border-radius:8px; margin-bottom:8px;">
+        <span style="font-size:18px;">⏳</span>
+        <div style="flex:1; font-size:12px;">Esperando aceptación... <span style="color:var(--text-light);">3 choferes viendo</span></div>
+      </div>
+      <div style="font-size:11px; color:var(--text-light);">Tiempo estimado de respuesta: 30-90 segundos</div>
+    </div>
+    <button class="btn btn-primary btn-block btn-lg" onclick="submitPonPrecio()">Enviar Oferta · $<span id="pon-precio-btn-val">92</span></button>
+  </div>
+</div>
+
+<!-- TRIPCHECK PASSENGER PANEL -->
+<div class="screen hidden-right" id="screen-tripcheck-passenger">
+  <div class="sbar"><span>9:41</span><span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span></div>
+  <div style="padding:36px 20px 100px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-tracking', 'left')"></i>
+      <h3 style="font-size:20px; font-weight:800;">🧠 TripCheck</h3>
+    </div>
+    <!-- Safety Score -->
+    <div style="background:linear-gradient(135deg,#10B981,#059669); border-radius:16px; padding:20px; margin-bottom:16px; color:white; text-align:center;">
+      <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; opacity:.8;">Tu viaje está</div>
+      <div style="font-size:36px; font-weight:800; margin:4px 0;">SEGURO</div>
+      <div style="font-size:12px; opacity:.9;">Score de seguridad: 9.4/10</div>
+    </div>
+    <!-- Live Monitoring -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px;">
+      <div style="font-size:13px; font-weight:700; margin-bottom:12px;">📡 Monitoreo en Tiempo Real</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div style="background:#F5F3FF; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:18px;">🛣️</div>
+          <div style="font-size:11px; font-weight:600; margin-top:4px;">Ruta Verificada</div>
+          <div style="font-size:10px; color:var(--success);">Sin desviaciones</div>
+        </div>
+        <div style="background:#F5F3FF; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:18px;">⚡</div>
+          <div style="font-size:11px; font-weight:600; margin-top:4px;">Velocidad OK</div>
+          <div style="font-size:10px; color:var(--success);">42 km/h promedio</div>
+        </div>
+        <div style="background:#F5F3FF; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:18px;">📍</div>
+          <div style="font-size:11px; font-weight:600; margin-top:4px;">GPS Activo</div>
+          <div style="font-size:10px; color:var(--success);">Actualizando cada 3s</div>
+        </div>
+        <div style="background:#F5F3FF; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:18px;">🧠</div>
+          <div style="font-size:11px; font-weight:600; margin-top:4px;">IA Activa</div>
+          <div style="font-size:10px; color:var(--success);">14 variables monitoreadas</div>
+        </div>
+      </div>
+    </div>
+    <!-- SOS Button -->
+    <div style="background:#FEE2E2; border:2px solid #FCA5A5; border-radius:12px; padding:16px; margin-bottom:12px; text-align:center;">
+      <div style="font-size:13px; font-weight:700; color:#991B1B; margin-bottom:8px;">Botón de Emergencia</div>
+      <button style="width:72px; height:72px; border-radius:50%; background:#DC2626; color:white; font-size:20px; font-weight:800; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(220,38,38,.4);" onclick="triggerSOS()">SOS</button>
+      <div style="font-size:10px; color:#991B1B; margin-top:6px;">Presiona en caso de emergencia</div>
+    </div>
+    <!-- Share Trip -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div>
+          <div style="font-size:13px; font-weight:700;">Compartir viaje en vivo</div>
+          <div style="font-size:11px; color:var(--text-light);">Tu familia puede ver tu ruta en tiempo real</div>
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="shareTripLink()">Compartir</button>
+      </div>
+    </div>
+    <!-- Contact -->
+    <div style="display:flex; gap:10px;">
+      <button style="flex:1; padding:12px; border-radius:12px; border:1px solid var(--border); background:var(--surface); font-size:12px; font-weight:600; cursor:pointer;" onclick="callDriver()">📞 Llamar chofer</button>
+      <button style="flex:1; padding:12px; border-radius:12px; border:1px solid var(--border); background:var(--surface); font-size:12px; font-weight:600; cursor:pointer;" onclick="messageSupport()">💬 Chat soporte</button>
+    </div>
+  </div>
+</div>
+
+<!-- MULTIMODAL TRANSIT -->
+<div class="screen hidden-right" id="screen-multimodal">
+  <div class="sbar"><span>9:41</span><span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span></div>
+  <div style="padding:36px 20px 100px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-home', 'left')"></i>
+      <h3 style="font-size:20px; font-weight:800;">🚇 Multimodal</h3>
+    </div>
+    <!-- Transit Options -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:16px;">
+      <div style="font-size:13px; font-weight:700; margin-bottom:12px;">Ruta sugerida: Polanco → Centro</div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="background:#7C3AED; color:white; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600;">🚗 Express</div>
+        <div style="font-size:12px; color:var(--text-light);">→</div>
+        <div style="background:#1E40AF; color:white; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600;">🚇 Metro L7</div>
+        <div style="font-size:12px; color:var(--text-light);">→</div>
+        <div style="background:#059669; color:white; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600;">🚲 Ecobici</div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-light); padding-top:10px; border-top:1px solid var(--border);">
+        <span>⏱ 35 min total</span><span>💰 $48 MXN</span><span>🌍 -62% CO₂</span>
+      </div>
+    </div>
+    <!-- Transit Modes -->
+    <div style="font-size:13px; font-weight:700; margin-bottom:10px;">Transporte disponible</div>
+    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+      <div style="display:flex; align-items:center; gap:12px; padding:14px; background:var(--surface); border:1px solid var(--border); border-radius:12px; cursor:pointer;">
+        <div style="width:42px; height:42px; border-radius:10px; background:#1E40AF; color:white; display:flex; align-items:center; justify-content:center; font-size:18px;">🚇</div>
+        <div style="flex:1;">
+          <div style="font-size:13px; font-weight:700;">Metro CDMX</div>
+          <div style="font-size:11px; color:var(--text-light);">Línea 7 · Polanco → San Joaquín</div>
+        </div>
+        <div style="font-size:12px; font-weight:700; color:var(--primary);">$5</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:14px; background:var(--surface); border:1px solid var(--border); border-radius:12px; cursor:pointer;">
+        <div style="width:42px; height:42px; border-radius:10px; background:#059669; color:white; display:flex; align-items:center; justify-content:center; font-size:18px;">🚲</div>
+        <div style="flex:1;">
+          <div style="font-size:13px; font-weight:700;">Ecobici</div>
+          <div style="font-size:11px; color:var(--text-light);">23 bicicletas cerca · Estación ECO-47</div>
+        </div>
+        <div style="font-size:12px; font-weight:700; color:var(--primary);">$23/hr</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:14px; background:var(--surface); border:1px solid var(--border); border-radius:12px; cursor:pointer;">
+        <div style="width:42px; height:42px; border-radius:10px; background:#B45309; color:white; display:flex; align-items:center; justify-content:center; font-size:18px;">🚌</div>
+        <div style="flex:1;">
+          <div style="font-size:13px; font-weight:700;">Metrobus</div>
+          <div style="font-size:11px; color:var(--text-light);">Línea 2 · Polanco → Centro</div>
+        </div>
+        <div style="font-size:12px; font-weight:700; color:var(--primary);">$6</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:14px; background:var(--surface); border:1px solid var(--border); border-radius:12px; cursor:pointer;">
+        <div style="width:42px; height:42px; border-radius:10px; background:#DC2626; color:white; display:flex; align-items:center; justify-content:center; font-size:18px;">🚊</div>
+        <div style="flex:1;">
+          <div style="font-size:13px; font-weight:700;">Tren Ligero</div>
+          <div style="font-size:11px; color:var(--text-light);">Xochimilco · Próximo en 8 min</div>
+        </div>
+        <div style="font-size:12px; font-weight:700; color:var(--primary);">$3</div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block btn-lg" onclick="bookMultimodal()">Reservar Ruta Multimodal · $48</button>
+  </div>
+</div>
+
+<!-- RIDE RECEIPT -->
+<div class="screen hidden-right" id="screen-receipt">
+  <div class="sbar"><span>9:41</span><span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span></div>
+  <div style="padding:36px 20px 100px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-home', 'left')"></i>
+      <h3 style="font-size:20px; font-weight:800;">🧾 Recibo de Viaje</h3>
+    </div>
+    <!-- Receipt Card -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:16px;">
+      <div style="text-align:center; margin-bottom:16px;">
+        <div style="font-size:28px; font-weight:800; color:var(--primary);">$92.00</div>
+        <div style="font-size:12px; color:var(--text-light);">Movilidad Express · 14 Ene 2024</div>
+      </div>
+      <!-- Route -->
+      <div style="display:flex; gap:12px; align-items:stretch; margin-bottom:16px;">
+        <div style="display:flex; flex-direction:column; align-items:center; padding:4px 0;">
+          <div style="width:10px; height:10px; border-radius:50%; background:var(--primary);"></div>
+          <div style="flex:1; width:2px; background:var(--border);"></div>
+          <div style="width:10px; height:10px; border-radius:50%; background:var(--danger);"></div>
+        </div>
+        <div style="flex:1;">
+          <div style="padding:6px 0; border-bottom:1px dashed var(--border);">
+            <div style="font-size:12px; font-weight:600;">Av. Presidente Masaryk 123</div>
+            <div style="font-size:10px; color:var(--text-light);">14:32 · Polanco</div>
+          </div>
+          <div style="padding:6px 0;">
+            <div style="font-size:12px; font-weight:600;">Torre Latinoamericana</div>
+            <div style="font-size:10px; color:var(--text-light);">15:01 · Centro</div>
+          </div>
+        </div>
+      </div>
+      <!-- Breakdown -->
+      <div style="border-top:1px solid var(--border); padding-top:12px;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+          <span>Tarifa base</span><span>$28.00</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+          <span>Distancia (8.3 km)</span><span>$41.50</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+          <span>Tiempo (29 min)</span><span>$14.50</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+          <span>Surge (1.1x)</span><span>$8.00</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px; color:var(--success);">
+          <span>Cupón MOVILIDAD10</span><span>-$10.00</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-top:8px; padding-top:8px; border-top:2px solid var(--border);">
+          <span>Total</span><span>$92.00</span>
+        </div>
+      </div>
+    </div>
+    <!-- Driver Info -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:40px; height:40px; border-radius:50%; background:var(--primary-100); display:flex; align-items:center; justify-content:center; font-size:18px;">🧑</div>
+        <div style="flex:1;">
+          <div style="font-size:13px; font-weight:700;">Roberto G. · 4.89 ★</div>
+          <div style="font-size:11px; color:var(--text-light);">Nissan Versa · Plate ABC-123</div>
+        </div>
+      </div>
+    </div>
+    <!-- Actions -->
+    <div style="display:flex; gap:10px;">
+      <button style="flex:1; padding:12px; border-radius:12px; border:1px solid var(--border); background:var(--surface); font-size:12px; font-weight:600; cursor:pointer;" onclick="downloadReceipt()">📥 Descargar PDF</button>
+      <button style="flex:1; padding:12px; border-radius:12px; border:1px solid var(--border); background:var(--surface); font-size:12px; font-weight:600; cursor:pointer;" onclick="sendReceiptEmail()">📧 Enviar email</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>

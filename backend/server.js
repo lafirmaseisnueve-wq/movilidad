@@ -924,6 +924,377 @@ app.get('/api/export', authMiddleware, (req, res) => {
   res.send(JSON.stringify(db, null, 2));
 });
 
+// ===== RIDE LIFECYCLE =====
+const RIDES_FILE = path.join(DATA_DIR, 'rides.json');
+const TRIPCHECK_FILE = path.join(DATA_DIR, 'tripcheck_events.json');
+
+function loadRides() {
+  if (!fs.existsSync(RIDES_FILE)) return [];
+  return JSON.parse(fs.readFileSync(RIDES_FILE, 'utf8'));
+}
+function saveRides(data) {
+  fs.writeFileSync(RIDES_FILE, JSON.stringify(data, null, 2));
+}
+function loadTripCheckEvents() {
+  if (!fs.existsSync(TRIPCHECK_FILE)) return [];
+  return JSON.parse(fs.readFileSync(TRIPCHECK_FILE, 'utf8'));
+}
+function saveTripCheckEvents(data) {
+  fs.writeFileSync(TRIPCHECK_FILE, JSON.stringify(data, null, 2));
+}
+
+// Seed initial rides data
+if (!fs.existsSync(RIDES_FILE)) {
+  const categories = ['express','comfort','taxi','moto','protect','premier','intercity','share'];
+  const statuses = ['completed','completed','completed','completed','in_progress','requested','cancelled','completed'];
+  const seedRides = Array.from({length: 50}, (_, i) => ({
+    id: `R${1000+i}`,
+    passenger: `P${2000+Math.floor(Math.random()*100)}`,
+    driver: i < 45 ? `D${1001+Math.floor(Math.random()*30)}` : null,
+    category: categories[Math.floor(Math.random()*categories.length)],
+    status: statuses[Math.floor(Math.random()*statuses.length)],
+    pickup: { lat: 19.43 + (Math.random()-0.5)*0.08, lng: -99.13 + (Math.random()-0.5)*0.08, name: ['Polanco','Condesa','Roma Norte','Centro','Santa Fe','Del Valle','Interlomas','Coyoacán'][Math.floor(Math.random()*8)] },
+    dropoff: { lat: 19.43 + (Math.random()-0.5)*0.08, lng: -99.13 + (Math.random()-0.5)*0.08, name: ['Aeropuerto','Santa Fe','Polanco','Centro','Tlatelolco','Insurgentes','Reforma','Perisur'][Math.floor(Math.random()*8)] },
+    fare: Math.floor(50 + Math.random()*450),
+    surge: [1,1,1,1.2,1.5,1.8,2.0,1][Math.floor(Math.random()*8)],
+    distance: +(1 + Math.random()*25).toFixed(1),
+    duration: Math.floor(3 + Math.random()*55),
+    rating: i < 40 ? +(3 + Math.random()*2).toFixed(1) : null,
+    createdAt: new Date(Date.now() - Math.floor(Math.random()*86400000*7)).toISOString(),
+    completedAt: statuses[i%8] === 'completed' ? new Date(Date.now() - Math.floor(Math.random()*86400000*3)).toISOString() : null
+  }));
+  saveRides(seedRides);
+}
+
+// Seed TripCheck events
+if (!fs.existsSync(TRIPCHECK_FILE)) {
+  const eventTypes = ['route_deviation','speed_alert','hard_brake','sos_triggered','auto_approved','escalated'];
+  const riskLevels = ['low','low','medium','high','critical','low'];
+  const seedEvents = Array.from({length: 30}, (_, i) => ({
+    id: `TC${3000+i}`,
+    rideId: `R${1000+Math.floor(Math.random()*50)}`,
+    type: eventTypes[Math.floor(Math.random()*eventTypes.length)],
+    riskLevel: riskLevels[Math.floor(Math.random()*riskLevels.length)],
+    description: ['Desvío de ruta detectado - 800m de la ruta planificada','Exceso de velocidad - 85km/h en zona 60km/h','Frenado brusco detectado - desaceleración 7.8 m/s²','Botón SOS activado por pasajera','Ruta alternativa aprobada por IA - tráfico justificado','Alerta escalada a experto humano'][Math.floor(Math.random()*6)],
+    location: { lat: 19.43 + (Math.random()-0.5)*0.06, lng: -99.13 + (Math.random()-0.5)*0.06 },
+    resolved: Math.random() > 0.3,
+    resolvedBy: Math.random() > 0.5 ? 'ai' : 'human',
+    createdAt: new Date(Date.now() - Math.floor(Math.random()*86400000*2)).toISOString()
+  }));
+  saveTripCheckEvents(seedEvents);
+}
+
+// GET rides with filters
+app.get('/api/rides', authMiddleware, (req, res) => {
+  const rides = loadRides();
+  const { status, category, limit, offset } = req.query;
+  let filtered = rides;
+  if (status) filtered = filtered.filter(r => r.status === status);
+  if (category) filtered = filtered.filter(r => r.category === category);
+  filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const total = filtered.length;
+  if (offset && limit) filtered = filtered.slice(+offset, +offset + +limit);
+  res.json({ total, rides: filtered });
+});
+
+// GET single ride
+app.get('/api/rides/:id', authMiddleware, (req, res) => {
+  const rides = loadRides();
+  const ride = rides.find(r => r.id === req.params.id);
+  if (!ride) return res.status(404).json({ error: 'Ride not found' });
+  const tripcheckEvents = loadTripCheckEvents().filter(e => e.rideId === ride.id);
+  res.json({ ...ride, tripcheckEvents });
+});
+
+// POST request new ride
+app.post('/api/rides', authMiddleware, (req, res) => {
+  const rides = loadRides();
+  const { passenger, category, pickup, dropoff, surge } = req.body;
+  const ride = {
+    id: `R${1000 + rides.length}`,
+    passenger: passenger || 'P2999',
+    driver: null,
+    category: category || 'express',
+    status: 'requested',
+    pickup, dropoff,
+    fare: Math.floor(50 + Math.random() * 350),
+    surge: surge || 1,
+    distance: +(1 + Math.random() * 20).toFixed(1),
+    duration: null,
+    rating: null,
+    createdAt: new Date().toISOString(),
+    completedAt: null
+  };
+  rides.push(ride);
+  saveRides(rides);
+  saveLog({ timestamp: new Date().toISOString(), action: 'ride_requested', rideId: ride.id, user: req.user.username });
+  res.status(201).json(ride);
+});
+
+// PATCH update ride status
+app.patch('/api/rides/:id/status', authMiddleware, (req, res) => {
+  const rides = loadRides();
+  const ride = rides.find(r => r.id === req.params.id);
+  if (!ride) return res.status(404).json({ error: 'Ride not found' });
+  const { status, driver, rating } = req.body;
+  if (status) ride.status = status;
+  if (driver) ride.driver = driver;
+  if (rating) ride.rating = +rating;
+  if (status === 'completed') {
+    ride.completedAt = new Date().toISOString();
+    ride.duration = Math.floor(3 + Math.random() * 50);
+  }
+  saveRides(rides);
+  saveLog({ timestamp: new Date().toISOString(), action: 'ride_status_update', rideId: ride.id, status, user: req.user.username });
+  res.json(ride);
+});
+
+// ===== TRIPCHECK EVENTS =====
+app.get('/api/tripcheck', authMiddleware, (req, res) => {
+  const events = loadTripCheckEvents();
+  const { riskLevel, type, resolved } = req.query;
+  let filtered = events;
+  if (riskLevel) filtered = filtered.filter(e => e.riskLevel === riskLevel);
+  if (type) filtered = filtered.filter(e => e.type === type);
+  if (resolved !== undefined) filtered = filtered.filter(e => e.resolved === (resolved === 'true'));
+  filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const summary = {
+    total: events.length,
+    unresolved: events.filter(e => !e.resolved).length,
+    byRiskLevel: { low: events.filter(e => e.riskLevel==='low').length, medium: events.filter(e => e.riskLevel==='medium').length, high: events.filter(e => e.riskLevel==='high').length, critical: events.filter(e => e.riskLevel==='critical').length },
+    byType: {}
+  };
+  events.forEach(e => { summary.byType[e.type] = (summary.byType[e.type] || 0) + 1; });
+  res.json({ summary, events: filtered });
+});
+
+// POST TripCheck event (triggered by safety engine)
+app.post('/api/tripcheck', authMiddleware, (req, res) => {
+  const events = loadTripCheckEvents();
+  const { rideId, type, riskLevel, description, location } = req.body;
+  const event = {
+    id: `TC${3000 + events.length}`,
+    rideId, type, riskLevel: riskLevel || 'medium',
+    description, location,
+    resolved: false, resolvedBy: null,
+    createdAt: new Date().toISOString()
+  };
+  events.push(event);
+  saveTripCheckEvents(events);
+  saveLog({ timestamp: new Date().toISOString(), action: 'tripcheck_event', eventId: event.id, type, user: req.user.username });
+  res.status(201).json(event);
+});
+
+// PATCH resolve TripCheck event
+app.patch('/api/tripcheck/:id/resolve', authMiddleware, (req, res) => {
+  const events = loadTripCheckEvents();
+  const event = events.find(e => e.id === req.params.id);
+  if (!event) return res.status(404).json({ error: 'Event not found' });
+  event.resolved = true;
+  event.resolvedBy = req.body.resolvedBy || 'human';
+  saveTripCheckEvents(events);
+  res.json(event);
+});
+
+// ===== EV CHARGING =====
+const CHARGING_FILE = path.join(DATA_DIR, 'charging_stations.json');
+if (!fs.existsSync(CHARGING_FILE)) {
+  const stations = [
+    { id:'ESC-001', name:'ESC-001 Polanco', zone:'Polanco', lat:19.433, lng:-99.200, types:['DC 150kW'], connectors:4, available:1, usageToday:87, status:'active', revenue:12400 },
+    { id:'ESC-002', name:'ESC-002 Santa Fe', zone:'Santa Fe', lat:19.359, lng:-99.268, types:['DC 350kW','AC'], connectors:8, available:0, usageToday:92, status:'full', revenue:18200 },
+    { id:'ESC-003', name:'ESC-003 Centro', zone:'Cuauhtémoc', lat:19.428, lng:-99.133, types:['DC 50kW'], connectors:3, available:2, usageToday:65, status:'active', revenue:8900 },
+    { id:'ESC-004', name:'ESC-004 Aeropuerto', zone:'Venustiano', lat:19.436, lng:-99.072, types:['DC 150kW'], connectors:6, available:3, usageToday:78, status:'active', revenue:21300 },
+    { id:'ESC-005', name:'ESC-005 Interlomas', zone:'Huixquilucan', lat:19.421, lng:-99.279, types:['DC 350kW'], connectors:2, available:2, usageToday:45, status:'maintenance', revenue:5600 },
+    { id:'ESC-006', name:'ESC-006 Condesa', zone:'Condesa', lat:19.413, lng:-99.168, types:['DC 50kW','AC'], connectors:6, available:3, usageToday:73, status:'active', revenue:9800 },
+    { id:'ESC-007', name:'ESC-007 Roma Norte', zone:'Roma Norte', lat:19.418, lng:-99.158, types:['DC 150kW'], connectors:3, available:1, usageToday:68, status:'active', revenue:11200 },
+    { id:'ESC-008', name:'ESC-008 Del Valle', zone:'Del Valle', lat:19.383, lng:-99.158, types:['AC'], connectors:8, available:5, usageToday:55, status:'active', revenue:6400 }
+  ];
+  fs.writeFileSync(CHARGING_FILE, JSON.stringify(stations, null, 2));
+}
+
+app.get('/api/charging/stations', authMiddleware, (req, res) => {
+  const stations = JSON.parse(fs.readFileSync(CHARGING_FILE, 'utf8'));
+  const totalKwh = stations.reduce((s, st) => s + st.usageToday * 24, 0);
+  res.json({ total: stations.length, totalKwh, avgUsage: Math.round(stations.reduce((s,st)=>s+st.usageToday,0)/stations.length), stations });
+});
+
+app.post('/api/charging/stations/:id/reserve', authMiddleware, (req, res) => {
+  const stations = JSON.parse(fs.readFileSync(CHARGING_FILE, 'utf8'));
+  const station = stations.find(s => s.id === req.params.id);
+  if (!station) return res.status(404).json({ error: 'Station not found' });
+  if (station.available <= 0) return res.status(409).json({ error: 'No connectors available' });
+  station.available--;
+  fs.writeFileSync(CHARGING_FILE, JSON.stringify(stations, null, 2));
+  saveLog({ timestamp: new Date().toISOString(), action: 'charging_reserved', stationId: station.id, user: req.user.username });
+  res.json({ success: true, station, reservationId: `RES-${Date.now()}`, estimatedCost: Math.floor(80 + Math.random()*80) });
+});
+
+// ===== MAINTENANCE =====
+const MAINTENANCE_FILE = path.join(DATA_DIR, 'maintenance_centers.json');
+if (!fs.existsSync(MAINTENANCE_FILE)) {
+  const centers = [
+    { id:'MC-001', name:'AutoService Polanco', zone:'Polanco', lat:19.435, lng:-99.198, rating:4.8, services:['oil','brakes','alignment','diagnostics'], packages:['basico','preventivo','premium_ev'], capacity:15, currentLoad:8, monthlyServices:420 },
+    { id:'MC-002', name:'TallerExpress Centro', zone:'Centro', lat:19.428, lng:-99.130, rating:4.5, services:['oil','filters','brakes','tires'], packages:['basico','preventivo'], capacity:10, currentLoad:6, monthlyServices:310 },
+    { id:'MC-003', name:'EV Service CDMX', zone:'Condesa', lat:19.413, lng:-99.165, rating:4.9, services:['battery_diag','software_update','cabin_filter','ev_tires','paint'], packages:['premium_ev'], capacity:8, currentLoad:3, monthlyServices:180 },
+    { id:'MC-004', name:'Multiservice Santa Fe', zone:'Santa Fe', lat:19.360, lng:-99.265, rating:4.6, services:['oil','brakes','alignment','suspension','electrical'], packages:['basico','preventivo'], capacity:20, currentLoad:14, monthlyServices:520 },
+    { id:'MC-005', name:'QuickFix Roma', zone:'Roma Norte', lat:19.418, lng:-99.155, rating:4.3, services:['oil','filters','diagnostics'], packages:['basico'], capacity:6, currentLoad:2, monthlyServices:190 }
+  ];
+  fs.writeFileSync(MAINTENANCE_FILE, JSON.stringify(centers, null, 2));
+}
+
+app.get('/api/maintenance/centers', authMiddleware, (req, res) => {
+  const centers = JSON.parse(fs.readFileSync(MAINTENANCE_FILE, 'utf8'));
+  res.json({ total: centers.length, totalServices: centers.reduce((s,c)=>s+c.monthlyServices,0), avgRating: +(centers.reduce((s,c)=>s+c.rating,0)/centers.length).toFixed(1), centers });
+});
+
+app.post('/api/maintenance/schedule', authMiddleware, (req, res) => {
+  const { centerId, packageType, vehicleId, date } = req.body;
+  saveLog({ timestamp: new Date().toISOString(), action: 'maintenance_scheduled', centerId, packageType, vehicleId, user: req.user.username });
+  const prices = { basico: 499, preventivo: 899, premium_ev: 1299 };
+  const discount = 0.32;
+  res.json({ success: true, appointmentId: `APT-${Date.now()}`, centerId, packageType, date: date || new Date(Date.now()+86400000*2).toISOString().split('T')[0], price: prices[packageType] || 499, discountedPrice: Math.round((prices[packageType]||499) * (1-discount)) });
+});
+
+// ===== FINANCING =====
+const FINANCING_FILE = path.join(DATA_DIR, 'financing_loans.json');
+if (!fs.existsSync(FINANCING_FILE)) {
+  const loans = Array.from({length: 25}, (_, i) => ({
+    id: `LOAN-${4000+i}`,
+    driverId: `D${1001+i}`,
+    driverName: ['Roberto Martínez','Ana García','Carlos López','María Hernández','Fernando Díaz','Patricia Ruiz','Miguel Torres','Laura Sánchez','José Ramírez','Elena Vargas'][i%10],
+    program: ['auto_ejecutivo','ev_green','flota_empresarial','auto_ejecutivo','ev_green'][i%5],
+    vehicle: ['Nissan Versa 2024','BYD Dolphin 2024','Toyota RAV4 2023','Chevrolet Onix 2024','JAC E10X 2024','Volkswagen Taos 2023','MG4 2024','Kia Rio 2024','Honda HR-V 2023','BMW iX1 2024'][i%10],
+    amount: [185000, 220000, 350000, 195000, 240000][i%5],
+    monthlyPayment: [4850, 3200, 8500, 5100, 3500][i%5],
+    termMonths: [48, 60, 36, 48, 60][i%5],
+    paidMonths: Math.floor(Math.random()*30)+1,
+    status: ['active','active','active','active','completed'][i%5],
+    delinquent: Math.random() > 0.92
+  }));
+  fs.writeFileSync(FINANCING_FILE, JSON.stringify(loans, null, 2));
+}
+
+app.get('/api/financing/loans', authMiddleware, (req, res) => {
+  const loans = JSON.parse(fs.readFileSync(FINANCING_FILE, 'utf8'));
+  const totalPortfolio = loans.filter(l=>l.status==='active').reduce((s,l)=>s+l.amount,0);
+  const delinquencyRate = +(loans.filter(l=>l.delinquent).length / Math.max(loans.filter(l=>l.status==='active').length,1) * 100).toFixed(1);
+  res.json({ total: loans.length, activeLoans: loans.filter(l=>l.status==='active').length, totalPortfolio, delinquencyRate, loans });
+});
+
+app.get('/api/financing/programs', authMiddleware, (req, res) => {
+  res.json({
+    programs: [
+      { id:'auto_ejecutivo', name:'Auto Ejecutivo', downPayment:15000, termMonths:48, rate:9.5, requirements:'6+ meses, rating 4.5+', activeLoans:4231, popular:true },
+      { id:'ev_green', name:'EV Green Finance', downPayment:0, termMonths:60, rate:6.5, requirements:'Vehículo EV certificado', activeLoans:1842, new:true },
+      { id:'flota_empresarial', name:'Flota Empresarial', downPayment:'variable', termMonths:48, rate:7.8, requirements:'10+ unidades, aprobación B2B', activeLoans:89, b2b:true }
+    ]
+  });
+});
+
+app.post('/api/financing/pre-approve', authMiddleware, (req, res) => {
+  const { driverId, programId } = req.body;
+  const approved = Math.random() > 0.2;
+  saveLog({ timestamp: new Date().toISOString(), action: 'financing_preapproval', driverId, programId, approved, user: req.user.username });
+  res.json({ driverId, programId, approved, maxAmount: approved ? Math.floor(150000 + Math.random()*200000) : 0, rate: approved ? (programId === 'ev_green' ? 6.5 : 9.5) : null, message: approved ? 'Pre-aprobado' : 'No califica en este momento' });
+});
+
+// ===== ROBOTAXI / DISPATCH =====
+const ROBOTAXI_FILE = path.join(DATA_DIR, 'robotaxi_status.json');
+if (!fs.existsSync(ROBOTAXI_FILE)) {
+  const fleet = Array.from({length: 47}, (_, i) => ({
+    id: `RTX-${5000+i}`,
+    vehicle: ['Zeekr 001','XPeng P7','BYD Han','Li Auto L9','NIO ET7'][i%5],
+    location: { lat: 19.43 + (Math.random()-0.5)*0.06, lng: -99.13 + (Math.random()-0.5)*0.06 },
+    status: ['active','active','active','active','charging','maintenance','idle'][i%7],
+    batteryLevel: Math.floor(20 + Math.random()*80),
+    tripsToday: Math.floor(3 + Math.random()*12),
+    oddZone: ['Polanco-Condesa-Roma','Polanco-Condesa-Roma','Santa Fe'][i%3],
+    lastIntervention: i < 45 ? null : new Date(Date.now() - Math.floor(Math.random()*86400000)).toISOString(),
+    safetyScore: +(9.0 + Math.random()*1.0).toFixed(1)
+  }));
+  fs.writeFileSync(ROBOTAXI_FILE, JSON.stringify(fleet, null, 2));
+}
+
+app.get('/api/robotaxi/fleet', authMiddleware, (req, res) => {
+  const fleet = JSON.parse(fs.readFileSync(ROBOTAXI_FILE, 'utf8'));
+  const activeFleet = fleet.filter(f => f.status === 'active');
+  const totalTrips = fleet.reduce((s, f) => s + f.tripsToday, 0);
+  const interventions = fleet.filter(f => f.lastIntervention).length;
+  res.json({
+    total: fleet.length,
+    active: activeFleet.length,
+    charging: fleet.filter(f=>f.status==='charging').length,
+    maintenance: fleet.filter(f=>f.status==='maintenance').length,
+    totalTrips,
+    interventions,
+    interventionRate: +(interventions / Math.max(totalTrips, 1) * 100).toFixed(1),
+    avgSafetyScore: +(fleet.reduce((s,f)=>s+f.safetyScore,0)/fleet.length).toFixed(1),
+    fleet
+  });
+});
+
+app.get('/api/dispatch/stats', authMiddleware, (req, res) => {
+  const rides = loadRides();
+  const today = new Date().toISOString().split('T')[0];
+  const todayRides = rides.filter(r => r.createdAt.startsWith(today));
+  const total = todayRides.length || rides.length;
+  const humanDispatched = rides.filter(r => r.driver && r.driver.startsWith('D')).length;
+  const autoDispatched = rides.filter(r => r.driver && r.driver.startsWith('RTX')).length;
+  const efficiency = 96.4;
+  const etaPrecision = 1.2;
+  res.json({
+    totalDispatches: total,
+    humanDispatched,
+    autoDispatched,
+    ratio: `${Math.round(humanDispatched/Math.max(humanDispatched+autoDispatched,1)*100)}:${Math.round(autoDispatched/Math.max(humanDispatched+autoDispatched,1)*100)}`,
+    efficiency,
+    etaPrecision,
+    monthlySavings: 4200000,
+    avgDispatchTime: '3.2s'
+  });
+});
+
+// ===== DASHBOARD STATS =====
+app.get('/api/stats/dashboard', authMiddleware, (req, res) => {
+  const rides = loadRides();
+  const completedRides = rides.filter(r => r.status === 'completed');
+  const totalRevenue = completedRides.reduce((s, r) => s + r.fare * r.surge, 0);
+  const avgRating = completedRides.filter(r => r.rating).reduce((s, r) => s + r.rating, 0) / Math.max(completedRides.filter(r => r.rating).length, 1);
+  const activeRides = rides.filter(r => r.status === 'in_progress').length;
+
+  const hours = Array.from({length:24}, (_,i) => `${i}:00`);
+  const ridesPerHour = hours.map(() => Math.floor(20 + Math.random() * 80));
+  const driversPerHour = hours.map(() => Math.floor(50 + Math.random() * 200));
+  const revenuePerHour = hours.map(() => Math.floor(5000 + Math.random() * 40000));
+  const waitPerHour = hours.map(() => +(2 + Math.random() * 6).toFixed(1));
+
+  res.json({
+    totalRides: rides.length,
+    completedRides: completedRides.length,
+    activeRides,
+    cancelledRides: rides.filter(r => r.status === 'cancelled').length,
+    totalRevenue: Math.round(totalRevenue),
+    avgRating: +avgRating.toFixed(1),
+    avgWaitTime: +(3 + Math.random()*3).toFixed(1),
+    activeDrivers: 2340 + Math.floor(Math.random()*200),
+    activePassengers: 15400 + Math.floor(Math.random()*2000),
+    surgeZonesActive: 3 + Math.floor(Math.random()*4),
+    categoryBreakdown: {
+      express: Math.floor(rides.filter(r=>r.category==='express').length),
+      comfort: Math.floor(rides.filter(r=>r.category==='comfort').length),
+      taxi: Math.floor(rides.filter(r=>r.category==='taxi').length),
+      moto: Math.floor(rides.filter(r=>r.category==='moto').length),
+      protect: Math.floor(rides.filter(r=>r.category==='protect').length),
+      premier: Math.floor(rides.filter(r=>r.category==='premier').length),
+      intercity: Math.floor(rides.filter(r=>r.category==='intercity').length),
+      share: Math.floor(rides.filter(r=>r.category==='share').length)
+    },
+    hourlyData: { hours, rides: ridesPerHour, drivers: driversPerHour, revenue: revenuePerHour, waitTime: waitPerHour },
+    acceptRate: hours.map(() => Math.floor(75 + Math.random()*20)),
+    cancelRate: hours.map(() => +(3 + Math.random()*10).toFixed(1))
+  });
+});
+
 // Start server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

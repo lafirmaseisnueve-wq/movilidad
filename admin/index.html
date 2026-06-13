@@ -152,6 +152,15 @@
     <div class="admin-content">
       <!-- ===== DASHBOARD ===== -->
       <div class="page active" id="page-dashboard">
+        <!-- Dashboard Action Bar -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="btn btn-sm btn-primary" onclick="showRideDetail()"><i class="fas fa-car"></i> Ver Viaje Detalle</button>
+          <button class="btn btn-sm btn-secondary" onclick="exportToCSV('rides')"><i class="fas fa-file-csv"></i> Exportar Viajes</button>
+          <button class="btn btn-sm btn-secondary" onclick="exportToCSV('drivers')"><i class="fas fa-users-cog"></i> Exportar Conductores</button>
+          <button class="btn btn-sm btn-secondary" onclick="exportToCSV('revenue')"><i class="fas fa-file-invoice-dollar"></i> Exportar Ingresos</button>
+          <button class="btn btn-sm btn-success" onclick="exportDashboardReport()"><i class="fas fa-file-alt"></i> Reporte Dashboard</button>
+          <button class="btn btn-sm btn-primary" onclick="addBulkCheckboxes()"><i class="fas fa-check-double"></i> Modo Bulk</button>
+        </div>
         <div class="stat-grid">
           <div class="stat-card">
             <div class="sc-icon" style="background:var(--primary-100); color:var(--primary);"><i class="fas fa-car"></i></div>
@@ -272,6 +281,8 @@
           <div class="stat-card"><div class="sc-label">Dispersado esta semana</div><div class="sc-value">$890K</div></div>
           <div class="stat-card"><div class="sc-label">Pendiente dispersión</div><div class="sc-value">$234K</div></div>
         </div>
+        <!-- Category Commission Config -->
+        <div id="commissions-list"></div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
           <div class="input-group"><label>Comisión Express (%)</label><input type="number" value="18" id="comm-express"></div>
           <div class="input-group"><label>Comisión Comfort (%)</label><input type="number" value="22" id="comm-comfort"></div>
@@ -732,6 +743,8 @@
             <canvas id="chart-robotaxi" height="260"></canvas>
           </div>
         </div>
+        <!-- Robotaxi Remote Monitoring Console -->
+        <div id="robotaxi-console" style="margin-top:20px;"></div>
       </div>
 
       <!-- ===== HYBRID DISPATCH ===== -->

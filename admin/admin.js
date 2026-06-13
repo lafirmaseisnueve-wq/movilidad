@@ -35,7 +35,8 @@ function showPage(id) {
   if (id === 'smartcity') initSmartCity();
   if (id === 'traffic-ai') initTrafficAI();
   if (id === 'mapping') initMapping();
-  if (id === 'robotaxi') initRobotaxi();
+  if (id === 'robotaxi') { initRobotaxi(); setTimeout(initRobotaxiConsole, 200); }
+  if (id === 'commissions') setTimeout(initCommissionsPage, 200);
   if (id === 'hybrid-dispatch') initHybridDispatch();
 }
 
@@ -730,7 +731,422 @@ function initHybridDispatch() {
   }
 }
 
+// ===== PHASE 8: REAL-TIME DASHBOARD UPDATES =====
+function initRealTimeUpdates() {
+  // Simulate WebSocket-style real-time stat updates every 5 seconds
+  setInterval(() => {
+    // Update dashboard stat values with slight random changes
+    const statValues = document.querySelectorAll('#page-dashboard .sc-value');
+    if (statValues.length >= 4) {
+      // Drivers online: fluctuate around 1247
+      const drivers = 1240 + Math.floor(Math.random() * 20);
+      statValues[0].textContent = drivers.toLocaleString();
+      // Active rides: fluctuate around 3891
+      const rides = 3880 + Math.floor(Math.random() * 30);
+      statValues[1].textContent = rides.toLocaleString();
+      // Revenue: increment slowly
+      const revBase = 847000 + Math.floor(Math.random() * 5000);
+      statValues[2].textContent = '$' + Math.floor(revBase / 1000) + 'K';
+      // SOS alerts: keep at 1-3
+      const sos = 1 + Math.floor(Math.random() * 3);
+      statValues[3].textContent = sos;
+    }
+    // Add live activity pulse effect to the page title area
+    const pageTitle = document.getElementById('page-title');
+    if (pageTitle && pageTitle.textContent === 'Dashboard') {
+      const existing = document.getElementById('live-pulse');
+      if (!existing) {
+        const pulse = document.createElement('span');
+        pulse.id = 'live-pulse';
+        pulse.innerHTML = ' <span class="live-dot" style="display:inline-block;"></span> <span style="font-size:11px;color:var(--success);font-weight:500;">LIVE</span>';
+        pageTitle.appendChild(pulse);
+      }
+    }
+  }, 5000);
+}
+
+// ===== RIDE DETAIL MODAL =====
+function showRideDetail(rideId) {
+  // Generate mock ride detail
+  const ride = {
+    id: rideId || 'RIDE-' + Math.floor(Math.random() * 90000 + 10000),
+    passenger: 'María García',
+    driver: 'Roberto Martínez',
+    vehicle: 'Nissan Versa Blanco · M-456 ABC',
+    pickup: 'Av. Presidente Masaryk 123, Polanco',
+    dropoff: 'Av. Michoacán 45, Condesa',
+    status: 'Completado',
+    fare: '$92.00',
+    distance: '5.2 km',
+    duration: '12 min',
+    surge: '×1.5',
+    payment: 'Visa •••• 4242',
+    commission: '-$13.80 (15%)',
+    driverEarning: '$78.20',
+    category: 'Express',
+    rating: '4.8 ★',
+    timeline: [
+      { time: '14:30:15', event: 'Viaje solicitado', icon: 'fa-mobile-alt', color: 'var(--primary)' },
+      { time: '14:30:45', event: 'Conductor asignado — Roberto M.', icon: 'fa-user-check', color: 'var(--success)' },
+      { time: '14:33:20', event: 'Conductor llegó al punto de recogida', icon: 'fa-map-marker-alt', color: '#3B82F6' },
+      { time: '14:34:05', event: 'Pasajero abordó — Viaje iniciado', icon: 'fa-car', color: 'var(--primary)' },
+      { time: '14:36:12', event: 'TripCheck: Velocidad normal (42 km/h)', icon: 'fa-brain', color: '#10B981' },
+      { time: '14:40:30', event: 'TripCheck: Desvío leve — Tráfico verificado', icon: 'fa-brain', color: '#F59E0B' },
+      { time: '14:44:18', event: 'Llegada al destino', icon: 'fa-flag-checkered', color: 'var(--success)' },
+      { time: '14:44:35', event: 'Pago procesado — Visa 4242', icon: 'fa-credit-card', color: 'var(--success)' },
+      { time: '14:45:00', event: 'Calificación: 4.8 ★', icon: 'fa-star', color: '#F59E0B' }
+    ]
+  };
+
+  const overlay = document.createElement('div');
+  overlay.id = 'ride-detail-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border-radius:16px;width:90%;max-width:600px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;">
+        <h3 style="font-size:16px;font-weight:800;flex:1;">🚗 ${ride.id}</h3>
+        <span style="background:var(--success);color:#fff;padding:4px 10px;border-radius:8px;font-size:10px;font-weight:700;">${ride.status}</span>
+        <i class="fas fa-times" style="cursor:pointer;font-size:16px;opacity:.5;" onclick="document.getElementById('ride-detail-overlay').remove()"></i>
+      </div>
+      <div style="padding:20px 24px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div style="background:var(--primary-50);border-radius:10px;padding:12px;">
+            <div style="font-size:10px;color:var(--text-light);">Pasajero</div>
+            <div style="font-size:13px;font-weight:700;">${ride.passenger}</div>
+          </div>
+          <div style="background:var(--primary-50);border-radius:10px;padding:12px;">
+            <div style="font-size:10px;color:var(--text-light);">Conductor</div>
+            <div style="font-size:13px;font-weight:700;">${ride.driver}</div>
+          </div>
+        </div>
+        <div style="background:#F5F3FF;border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <div style="width:10px;height:10px;border-radius:50%;background:var(--success);"></div>
+            <span>${ride.pickup}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:10px;height:10px;border-radius:50%;background:var(--danger);"></div>
+            <span>${ride.dropoff}</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;text-align:center;">
+          <div><div style="font-size:18px;font-weight:800;color:var(--primary);">${ride.fare}</div><div style="font-size:9px;color:var(--text-light);">Tarifa</div></div>
+          <div><div style="font-size:18px;font-weight:800;">${ride.distance}</div><div style="font-size:9px;color:var(--text-light);">Distancia</div></div>
+          <div><div style="font-size:18px;font-weight:800;">${ride.duration}</div><div style="font-size:9px;color:var(--text-light);">Duración</div></div>
+          <div><div style="font-size:18px;font-weight:800;color:var(--danger);">${ride.surge}</div><div style="font-size:9px;color:var(--text-light);">Surge</div></div>
+        </div>
+        <div style="background:#FEF3C7;border-radius:10px;padding:12px;margin-bottom:16px;font-size:11px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Pago pasajero</span><span style="font-weight:700;">${ride.fare}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Comisión (15%)</span><span style="font-weight:700;color:var(--danger);">${ride.commission}</span></div>
+          <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:4px;"><span>Ganancia conductor</span><span style="font-weight:800;color:var(--success);">${ride.driverEarning}</span></div>
+        </div>
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 Timeline del Viaje</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${ride.timeline.map(t => `
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:11px;">
+              <div style="min-width:24px;height:24px;background:${t.color}15;border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="fas ${t.icon}" style="color:${t.color};font-size:10px;"></i></div>
+              <div style="flex:1;"><div style="font-weight:600;">${t.event}</div><div style="color:var(--text-light);font-size:9px;">${t.time}</div></div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+// ===== BULK OPERATIONS =====
+function bulkApproveDrivers() {
+  const checkboxes = document.querySelectorAll('#drivers-tbody input[type="checkbox"]:checked');
+  if (checkboxes.length === 0) { alert('Selecciona al menos un conductor'); return; }
+  const count = checkboxes.length;
+  if (confirm(`¿Aprobar masivamente ${count} conductores?`)) {
+    checkboxes.forEach(cb => {
+      const row = cb.closest('tr');
+      if (row) {
+        const statusCell = row.querySelector('td:nth-child(6)');
+        if (statusCell) statusCell.innerHTML = '<span class="badge badge-success">Activo</span>';
+      }
+    });
+    alert(`✅ ${count} conductores aprobados exitosamente`);
+  }
+}
+
+function bulkVerifyDocuments() {
+  const checkboxes = document.querySelectorAll('#docs-list input[type="checkbox"]:checked');
+  if (checkboxes.length === 0) { alert('Selecciona al menos un documento'); return; }
+  const count = checkboxes.length;
+  if (confirm(`¿Verificar masivamente ${count} documentos?`)) {
+    checkboxes.forEach(cb => {
+      const card = cb.closest('.doc-card, [class*="card"]');
+      if (card) {
+        const badge = card.querySelector('.badge');
+        if (badge) { badge.textContent = 'Verificado'; badge.className = 'badge badge-success'; }
+      }
+    });
+    alert(`✅ ${count} documentos verificados exitosamente`);
+  }
+}
+
+function addBulkCheckboxes() {
+  // Add checkboxes to drivers table header
+  const th = document.querySelector('#drivers-table thead tr th:first-child');
+  if (th && !th.querySelector('input')) {
+    th.innerHTML = '<input type="checkbox" onclick="toggleAllDrivers(this)"> ID';
+  }
+  // Add checkboxes to each row
+  document.querySelectorAll('#drivers-tbody tr').forEach(row => {
+    const firstTd = row.querySelector('td:first-child');
+    if (firstTd && !firstTd.querySelector('input')) {
+      const id = firstTd.textContent.trim();
+      firstTd.innerHTML = `<input type="checkbox" value="${id}"> ${id}`;
+    }
+  });
+  // Add bulk action button if not exists
+  const header = document.querySelector('#page-users .ut-header');
+  if (header && !document.getElementById('bulk-approve-btn')) {
+    const btn = document.createElement('button');
+    btn.id = 'bulk-approve-btn';
+    btn.className = 'btn btn-success btn-sm';
+    btn.style.marginLeft = '8px';
+    btn.innerHTML = '<i class="fas fa-check-double"></i> Aprobar seleccionados';
+    btn.onclick = bulkApproveDrivers;
+    header.appendChild(btn);
+  }
+}
+
+function toggleAllDrivers(master) {
+  document.querySelectorAll('#drivers-tbody input[type="checkbox"]').forEach(cb => {
+    cb.checked = master.checked;
+  });
+}
+
+// ===== EXPORT / REPORT GENERATION =====
+function exportToCSV(dataType) {
+  let csv = '';
+  let filename = '';
+
+  if (dataType === 'rides') {
+    csv = 'ID,Pasajero,Conductor,Origen,Destino,Tarifa,Distancia,Duración,Categoría,Surge,Estado,Fecha\n';
+    for (let i = 0; i < 50; i++) {
+      const cats = ['Express','Comfort','Premier','Moto','Intercity'];
+      const statuses = ['Completado','En curso','Cancelado','Solicitado'];
+      csv += `RIDE-${10000+i},Pasajero ${i+1},Conductor ${i+1},"Dir ${i} Polanco","Dir ${i} Condesa",$${(50+Math.floor(Math.random()*200)).toFixed(2)},${(2+Math.random()*15).toFixed(1)}km,${(5+Math.floor(Math.random()*30))}min,${cats[i%5]},×${(1+Math.random()*2).toFixed(1)},${statuses[i%4]},2024-06-${String(13).padStart(2,'0')}\n`;
+    }
+    filename = 'viajes_export.csv';
+  } else if (dataType === 'drivers') {
+    csv = 'ID,Nombre,Vehículo,Placa,Calificación,Viajes,Estado\n';
+    for (let i = 0; i < 30; i++) {
+      const statuses = ['Activo','Inactivo','Suspendido','Verificación'];
+      csv += `DRV-${1000+i},Conductor ${i+1},Vehicle ${i},ABC-${100+i},${(3.5+Math.random()*1.5).toFixed(1)},${Math.floor(Math.random()*500)},${statuses[i%4]}\n`;
+    }
+    filename = 'conductores_export.csv';
+  } else if (dataType === 'revenue') {
+    csv = 'Fecha,Viajes,Ingresos,Comisiones,Ganancia Neta\n';
+    for (let i = 1; i <= 30; i++) {
+      const rides = Math.floor(2000 + Math.random() * 3000);
+      const rev = rides * 85;
+      const comm = rev * 0.15;
+      csv += `2024-06-${String(i).padStart(2,'0')},${rides},$${rev},$${Math.floor(comm)},$${Math.floor(rev-comm)}\n`;
+    }
+    filename = 'ingresos_export.csv';
+  }
+
+  // Download
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportDashboardReport() {
+  const report = `
+MOVILIDAD — Reporte de Dashboard
+Generado: ${new Date().toLocaleString('es-MX')}
+========================================
+
+CONDUCTORES EN LÍNEA: 1,247 (+12% vs ayer)
+VIAJES ACTIVOS: 3,891 (+8% vs ayer)
+INGRESOS HOY: $847K (+15%)
+ALERTAS SOS: 2
+
+VIAJES POR HORA (últimas 24h):
+00:00 - 89 | 01:00 - 45 | 02:00 - 23 | 03:00 - 15
+04:00 - 28 | 05:00 - 67 | 06:00 - 234 | 07:00 - 567
+08:00 - 890 | 09:00 - 1200 | 10:00 - 1450 | 11:00 - 1380
+12:00 - 1100 | 13:00 - 980 | 14:00 - 1050 | 15:00 - 1230
+16:00 - 1450 | 17:00 - 1680 | 18:00 - 1890 | 19:00 - 1560
+20:00 - 1230 | 21:00 - 890 | 22:00 - 560 | 23:00 - 230
+
+CATEGORÍAS:
+Express: 45% | Comfort: 18% | Taxi: 12% | Moto: 10% | Protect: 8% | Share: 7%
+
+SURGE PRICING ACTIVO:
+Polanco ×2.5 | Santa Fe ×2.0 | Condesa ×1.8 | Centro ×1.5
+
+========================================
+By TheFirm69 Systems — Movilidad Platform
+  `.trim();
+
+  const blob = new Blob([report], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'dashboard_report.txt'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===== COMMISSION CONFIGURATION PER CATEGORY =====
+const commissionConfig = {
+  Express: { rate: 15, minFare: 30, maxCap: 50 },
+  Comfort: { rate: 18, minFare: 45, maxCap: 80 },
+  Premier: { rate: 20, minFare: 80, maxCap: 150 },
+  Moto: { rate: 12, minFare: 20, maxCap: 35 },
+  Intercity: { rate: 10, minFare: 200, maxCap: 500 },
+  Taxi: { rate: 8, minFare: 25, maxCap: 40 }
+};
+
+function initCommissionsPage() {
+  const container = document.getElementById('commissions-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  Object.entries(commissionConfig).forEach(([cat, config]) => {
+    const catColors = { Express: '#7C3AED', Comfort: '#EC4899', Premier: '#F59E0B', Moto: '#10B981', Intercity: '#3B82F6', Taxi: '#6B7280' };
+    const color = catColors[cat] || '#7C3AED';
+
+    const card = document.createElement('div');
+    card.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;';
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:12px;height:12px;border-radius:50%;background:${color};"></div>
+        <h4 style="font-size:14px;font-weight:700;flex:1;">${cat}</h4>
+        <span style="font-size:20px;font-weight:900;color:${color};">${config.rate}%</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div>
+          <label style="font-size:10px;color:var(--text-light);display:block;margin-bottom:2px;">Comisión %</label>
+          <input type="number" value="${config.rate}" min="0" max="40" step="1"
+            style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;"
+            onchange="commissionConfig['${cat}'].rate=Number(this.value)">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--text-light);display:block;margin-bottom:2px;">Tarifa mínima</label>
+          <input type="number" value="${config.minFare}" min="0"
+            style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;"
+            onchange="commissionConfig['${cat}'].minFare=Number(this.value)">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--text-light);display:block;margin-bottom:2px;">Cap máximo</label>
+          <input type="number" value="${config.maxCap}" min="0"
+            style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;"
+            onchange="commissionConfig['${cat}'].maxCap=Number(this.value)">
+        </div>
+      </div>
+      <button class="btn btn-sm btn-primary" style="margin-top:8px;width:100%;" onclick="saveCommissionConfig('${cat}')">
+        <i class="fas fa-save"></i> Guardar ${cat}
+      </button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function saveCommissionConfig(category) {
+  const config = commissionConfig[category];
+  alert(`✅ Configuración guardada para ${category}\n\nComisión: ${config.rate}%\nTarifa mínima: $${config.minFare}\nCap máximo: $${config.maxCap}`);
+}
+
+// ===== ROBOTAXI REMOTE MONITORING CONSOLE =====
+let robotaxiConsoleInit = false;
+
+function initRobotaxiConsole() {
+  if (robotaxiConsoleInit) return;
+  robotaxiConsoleInit = true;
+
+  const container = document.getElementById('robotaxi-console');
+  if (!container) return;
+
+  const fleet = [
+    { id: 'RT-001', model: 'BYD Dolphin Auto', battery: 82, status: 'En viaje', passenger: 'Ana R.', location: 'Polanco', speed: 38 },
+    { id: 'RT-002', model: 'JAC E10X Auto', battery: 56, status: 'Disponible', passenger: '-', location: 'Santa Fe', speed: 0 },
+    { id: 'RT-003', model: 'MG4 Auto', battery: 91, status: 'Cargando', passenger: '-', location: 'ESC-001', speed: 0 },
+    { id: 'RT-004', model: 'BYD Dolphin Auto', battery: 34, status: 'En viaje', passenger: 'Carlos M.', location: 'Condesa', speed: 42 },
+    { id: 'RT-005', model: 'JAC E10X Auto', battery: 15, status: 'Batería baja', passenger: '-', location: 'Centro', speed: 12 },
+    { id: 'RT-006', model: 'MG4 Auto', battery: 67, status: 'En viaje', passenger: 'Luis P.', location: 'Roma Norte', speed: 35 }
+  ];
+
+  container.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="font-size:14px;font-weight:700;">🤖 Consola de Monitoreo Robotaxi</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm btn-primary" onclick="refreshRobotaxiConsole()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        <button class="btn btn-sm btn-danger" onclick="emergencyStopAllRobotaxis()"><i class="fas fa-stop-circle"></i> Emergency Stop</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+      <div style="background:var(--primary-50);border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:900;color:var(--primary);">${fleet.length}</div>
+        <div style="font-size:10px;color:var(--text-light);">Total Fleet</div>
+      </div>
+      <div style="background:#D1FAE5;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:900;color:var(--success);">${fleet.filter(f => f.status === 'En viaje').length}</div>
+        <div style="font-size:10px;color:var(--text-light);">En Viaje</div>
+      </div>
+      <div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:900;color:#B45309;">${fleet.filter(f => f.status === 'Cargando' || f.status === 'Batería baja').length}</div>
+        <div style="font-size:10px;color:var(--text-light);">Atención</div>
+      </div>
+    </div>
+    <table class="data-table" style="font-size:11px;">
+      <thead><tr><th>ID</th><th>Modelo</th><th>Batería</th><th>Estado</th><th>Pasajero</th><th>Ubicación</th><th>Velocidad</th><th>Acciones</th></tr></thead>
+      <tbody>
+        ${fleet.map(f => {
+          const batColor = f.battery > 60 ? 'var(--success)' : f.battery > 30 ? '#F59E0B' : 'var(--danger)';
+          const statusBadge = f.status === 'En viaje' ? 'badge-primary' : f.status === 'Disponible' ? 'badge-success' : f.status === 'Cargando' ? 'badge-warning' : 'badge-danger';
+          return `<tr>
+            <td style="font-weight:700;">${f.id}</td>
+            <td>${f.model}</td>
+            <td><span style="color:${batColor};font-weight:700;">${f.battery}%</span></td>
+            <td><span class="badge ${statusBadge}">${f.status}</span></td>
+            <td>${f.passenger}</td>
+            <td>${f.location}</td>
+            <td>${f.speed} km/h</td>
+            <td>
+              <button class="btn btn-sm btn-secondary" onclick="remoteControlRobotaxi('${f.id}')" style="padding:2px 6px;font-size:9px;">Control</button>
+              <button class="btn btn-sm btn-danger" onclick="emergencyStopRobotaxi('${f.id}')" style="padding:2px 6px;font-size:9px;">STOP</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function remoteControlRobotaxi(id) {
+  alert(`🎮 Control remoto iniciado para ${id}\n\n• Cámara frontal activada\n• Velocidad limitada a 25 km/h\n• Intervención humana habilitada\n• Telemetría en tiempo real`);
+}
+
+function emergencyStopRobotaxi(id) {
+  if (confirm(`🚨 ¿Detener emergencia ${id}?`)) {
+    alert(`✅ ${id} detenido exitosamente\n• Vehículo detenido en posición segura\n• Pasajero notificado\n• Equipo de recuperación despachado`);
+  }
+}
+
+function emergencyStopAllRobotaxis() {
+  if (confirm('🚨 ¿DETENER TODOS los robotaxis? Esto es una emergencia global.')) {
+    alert('✅ Protocolo de emergencia ejecutado\n\n• 6 robotaxis detenidos\n• Todos los pasajeros notificados\n• Equipos de recuperación despachados\n• SOC alertado');
+  }
+}
+
+function refreshRobotaxiConsole() {
+  robotaxiConsoleInit = false;
+  initRobotaxiConsole();
+}
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
   initDashboardCharts();
+  initRealTimeUpdates();
 });

@@ -4,7 +4,14 @@
    Connects to backend server.js on port 3001
    ================================================================ */
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = (() => {
+  // Auto-detect backend URL
+  const h = window.location.hostname;
+  if (h.includes('super.myninja.ai')) {
+    return 'https://' + h.replace(/-\d+\./, '-01cbe.') + '/api';
+  }
+  return 'http://localhost:3001/api';
+})();
 let apiConfigs = [];
 let apiLogs = [];
 let apiCategories = [];
@@ -23,7 +30,7 @@ async function apiLogin() {
       body: JSON.stringify({ username: user, password: pass })
     });
     const data = await res.json();
-    if (data.success && data.token) {
+    if (data.token) {
       jwtToken = data.token;
       localStorage.setItem('movilidad_jwt', jwtToken);
       document.getElementById('api-login-overlay').style.display = 'none';
@@ -424,6 +431,22 @@ function showApiToast(msg, type) {
   container.appendChild(toast);
   setTimeout(() => toast.classList.add('show'), 10);
   setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+// ===== TAB SWITCHING =====
+function showApiTab(tabName) {
+  document.querySelectorAll('.amc-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.amc-tab-content').forEach(t => t.classList.remove('active'));
+  const tab = document.querySelector(`.amc-tab[onclick*="${tabName}"]`);
+  if (tab) tab.classList.add('active');
+  const content = document.getElementById('tab-' + tabName);
+  if (content) content.classList.add('active');
+}
+
+// ===== LOAD LOGS =====
+async function loadApiLogs() {
+  const logs = await apiFetch(API_BASE + '/logs?limit=30');
+  if (logs) { apiLogs = logs; renderApiLogs(); }
 }
 
 // ===== INIT =====
