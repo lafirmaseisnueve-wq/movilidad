@@ -121,7 +121,7 @@ function renderCategoryFilters() {
   if (!el) return;
   const cats = {};
   apiConfigs.forEach(a => { if (!cats[a.category]) cats[a.category] = 0; cats[a.category]++; });
-  const catNames = { mapping:'🗺️ Mapas', realtime:'⚡ Tiempo Real', payments:'💳 Pagos', communications:'📞 Comunicaciones', authentication:'🔥 Autenticación', storage:'☁️ Almacenamiento', notifications:'🔔 Notificaciones', streaming:'📊 Streaming', geospatial:'🌐 Geoespacial', infrastructure:'🔧 Infraestructura', database:'🐘 Base de Datos' };
+  const catNames = { mapping:'🗺️ Mapas', realtime:'⚡ Tiempo Real', payments:'💳 Pagos', communications:'📞 Comunicaciones', authentication:'🔥 Autenticación', storage:'☁️ Almacenamiento', notifications:'🔔 Notificaciones', streaming:'📊 Streaming', geospatial:'🌐 Geoespacial', infrastructure:'🔧 Infraestructura', database:'🐘 Base de Datos', 'artificial-intelligence':'🧠 IA / Gemini' };
   el.innerHTML = `<button class="btn btn-sm btn-primary api-cat-btn active" onclick="filterByCategory('all')">Todas (${apiConfigs.length})</button>` +
     Object.keys(cats).map(c => `<button class="btn btn-sm btn-secondary api-cat-btn" onclick="filterByCategory('${c}')">${catNames[c]||c} (${cats[c]})</button>`).join('');
 }
@@ -162,7 +162,7 @@ function renderApiCards() {
 }
 
 function getCategoryLabel(cat) {
-  const m = { mapping:'Mapas', realtime:'Realtime', payments:'Pagos', communications:'Coms', authentication:'Auth', storage:'Storage', notifications:'Push', streaming:'Stream', geospatial:'Geo', infrastructure:'Infra', database:'DB' };
+  const m = { mapping:'Mapas', realtime:'Realtime', payments:'Pagos', communications:'Coms', authentication:'Auth', storage:'Storage', notifications:'Push', streaming:'Stream', geospatial:'Geo', infrastructure:'Infra', database:'DB', 'artificial-intelligence':'IA/Gemini' };
   return m[cat] || cat;
 }
 
@@ -449,7 +449,49 @@ async function loadApiLogs() {
   if (logs) { apiLogs = logs; renderApiLogs(); }
 }
 
+// ===== GEMINI AI FUNCTIONS =====
+async function loadGeminiStatus() {
+  const status = await apiFetch(API_BASE + '/gemini/status');
+  const el = document.getElementById('gemini-status-info');
+  if (!el || !status) return;
+  
+  const statusColor = status.configured ? (status.hasApiKey ? '#10B981' : '#F59E0B') : '#EF4444';
+  const statusText = status.configured ? (status.hasApiKey ? '✅ Configurado & Conectado' : '⚠️ Falta API Key') : '❌ No Configurado';
+  const healthColor = status.health === 'healthy' ? '#10B981' : status.health === 'active' ? '#10B981' : status.health === 'error' ? '#EF4444' : '#F59E0B';
+  
+  el.innerHTML = `
+    <span style="color:${statusColor};font-size:11px;font-weight:700;">${statusText}</span>
+    <span style="color:rgba(255,255,255,.5);font-size:11px;">🤖 Modelo: <strong style="color:#fff;">${status.model}</strong></span>
+    <span style="color:${healthColor};font-size:11px;">${status.health === 'healthy' ? '🟢 Saludable' : status.health === 'active' ? '🟢 Activo' : status.health === 'error' ? '🔴 Error' : '🟡 Sin Probar'}</span>
+    <span style="color:rgba(255,255,255,.5);font-size:11px;">📊 Cuota: <strong style="color:#fff;">${status.quotas?.used || 0}/${status.quotas?.daily || '∞'}</strong></span>
+    <span style="color:rgba(255,255,255,.5);font-size:11px;">🔍 Análisis: <strong style="color:#fff;">${(status.analysisTypes || []).join(', ')}</strong></span>
+  `;
+}
+
+async function testGeminiConnection() {
+  const btn = event.target;
+  btn.disabled = true;
+  const origText = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;"></span> Probando...';
+  
+  const res = await apiFetch(API_BASE + '/gemini/test', { method: 'POST' });
+  
+  if (res && res.connected) {
+    showApiToast('🧠 Gemini AI conectado exitosamente — TripCheck listo', 'success');
+  } else if (res && res.configured && !res.connected) {
+    showApiToast('⚠️ Gemini configurado pero sin conexión — Verifica tu API Key', 'warning');
+  } else {
+    showApiToast('❌ Gemini no configurado — Agrega tu API Key', 'error');
+  }
+  
+  loadGeminiStatus();
+  btn.disabled = false;
+  btn.innerHTML = origText;
+}
+
 // ===== INIT =====
 function initApiConfigPanel() {
   checkApiAuth();
+  // Load Gemini status after auth
+  setTimeout(loadGeminiStatus, 2000);
 }

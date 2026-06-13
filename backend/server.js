@@ -1295,11 +1295,257 @@ app.get('/api/stats/dashboard', authMiddleware, (req, res) => {
   });
 });
 
+// ===== GEMINI AI INTEGRATION =====
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com';
+
+// Helper: Get Gemini API key from config
+function getGeminiConfig() {
+  const db = loadDB();
+  const gemini = db.apis.find(a => a.id === 'gemini-ai');
+  if (!gemini || !gemini.enabled) return null;
+  const apiKey = gemini.credentials?.apiKey?.value;
+  if (!apiKey) return null;
+  return {
+    apiKey,
+    model: gemini.credentials?.model?.value || 'gemini-pro',
+    temperature: parseFloat(gemini.credentials?.temperature?.value || '0.2'),
+    maxTokens: parseInt(gemini.credentials?.maxTokens?.value || '2048'),
+    safetySettings: gemini.credentials?.safetySettings?.value || 'STANDARD'
+  };
+}
+
+// POST /api/gemini/analyze — TripCheck AI Analysis
+app.post('/api/gemini/analyze', authMiddleware, async (req, res) => {
+  const config = getGeminiConfig();
+  if (!config) {
+    return res.status(400).json({ error: 'Gemini AI no configurado. Agrega tu API Key en la configuración de APIs.' });
+  }
+
+  const { type, data } = req.body;
+  if (!type || !data) {
+    return res.status(400).json({ error: 'Se requiere type y data' });
+  }
+
+  // Build prompt based on analysis type
+  const prompts = {
+    'route-deviation': `Eres TripCheck AI, el sistema de seguridad de la plataforma de transporte Movilidad. Analiza esta desviación de ruta y determina si es sospechosa.
+Ruta esperada: ${data.expectedRoute || 'N/A'}
+Ruta actual: ${data.actualRoute || 'N/A'}
+Distancia de desviación: ${data.deviationDistance || 'N/A'}m
+Velocidad actual: ${data.speed || 'N/A'} km/h
+Zona: ${data.zone || 'N/A'}
+Hora: ${data.time || new Date().toISOString()}
+
+Responde en JSON con: { "risk": "low|medium|high|critical", "score": 0-10, "action": "monitor|alert|emergency_stop", "reason": "explicación breve", "suggestion": "sugerencia" }`,
+
+    'speed-anomaly': `Eres TripCheck AI. Analiza esta anomalía de velocidad durante un viaje.
+Velocidad actual: ${data.speed || 'N/A'} km/h
+Límite de velocidad zona: ${data.speedLimit || 'N/A'} km/h
+Exceso: ${data.excess || 'N/A'} km/h
+Duración: ${data.duration || 'N/A'}s
+Tipo de zona: ${data.zoneType || 'N/A'}
+Historial conductor: ${data.driverHistory || 'N/A'}
+
+Responde en JSON con: { "risk": "low|medium|high|critical", "score": 0-10, "action": "warning|alert|slowdown_request|emergency", "reason": "explicación", "fine": "multa estimada si aplica" }`,
+
+    'incident-detection': `Eres TripCheck AI. Analiza este posible incidente detectado durante un viaje.
+Tipo: ${data.incidentType || 'N/A'} (sudden_stop|collision|off_route|panic_button|unusual_stop)
+Fuerza G detectada: ${data.gForce || 'N/A'}
+Ubicación: ${data.location || 'N/A'}
+Velocidad pre-incidente: ${data.preSpeed || 'N/A'} km/h
+Velocidad post-incidente: ${data.postSpeed || 'N/A'} km/h
+Pasajero en viaje: ${data.passengerPresent || 'N/A'}
+
+Responde en JSON con: { "risk": "low|medium|high|critical", "severity": 0-10, "action": "log|notify|alert_passenger|emergency_services|911", "reason": "explicación", "recommendedActions": ["acción1", "acción2"], "contact911": true/false }`,
+
+    'safety-score': `Eres TripCheck AI. Calcula el safety score para este viaje completado.
+Duración: ${data.duration || 'N/A'} min
+Distancia: ${data.distance || 'N/A'} km
+Desviaciones de ruta: ${data.routeDeviations || 0}
+Excesos de velocidad: ${data.speedViolations || 0}
+Paradas inusuales: ${data.unusualStops || 0}
+Frenadas bruscas: ${data.hardBrakes || 0}
+Score anterior conductor: ${data.previousScore || 'N/A'}
+Incidentes reportados: ${data.incidents || 0}
+
+Responde en JSON con: { "score": 0-10, "level": "excellent|good|acceptable|poor|dangerous", "breakdown": { "route": 0-10, "speed": 0-10, "behavior": 0-10, "overall": 0-10 }, "flags": ["flag1", "flag2"], "recommendation": "recomendación para conductor" }`,
+
+    'ride-safety-check': `Eres TripCheck AI. Realiza una verificación de seguridad pre-viaje.
+Conductor: ${data.driverName || 'N/A'}
+Rating conductor: ${data.driverRating || 'N/A'}/5
+Viajes completados: ${data.driverTrips || 'N/A'}
+Verificación identidad: ${data.identityVerified || 'N/A'}
+Documento vehicular: ${data.vehicleDocStatus || 'N/A'}
+Zona pickup: ${data.pickupZone || 'N/A'}
+Hora: ${data.pickupTime || 'N/A'}
+Categoría: ${data.category || 'N/A'}
+
+Responde en JSON con: { "safe": true/false, "score": 0-10, "warnings": ["warning1"], "proceed": true/false, "suggestion": "sugerencia si procede" }`
+  };
+
+  const prompt = prompts[type];
+  if (!prompt) {
+    return res.status(400).json({ error: `Tipo de análisis inválido: ${type}. Tipos válidos: ${Object.keys(prompts).join(', ')}` });
+  }
+
+  try {
+    const model = config.model || 'gemini-pro';
+    const fetchUrl = `${GEMINI_API_URL}/v1beta/models/${model}:generateContent?key=${config.apiKey}`;
+
+    const safetyMap = {
+      'STANDARD': 'BLOCK_ONLY_HIGH',
+      'STRICT': 'BLOCK_MEDIUM_AND_ABOVE',
+      'PERMISSIVE': 'BLOCK_NONE'
+    };
+
+    const body = {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: config.temperature,
+        maxOutputTokens: config.maxTokens,
+        responseMimeType: 'application/json'
+      },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: safetyMap[config.safetySettings] || 'BLOCK_ONLY_HIGH' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: safetyMap[config.safetySettings] || 'BLOCK_ONLY_HIGH' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: safetyMap[config.safetySettings] || 'BLOCK_ONLY_HIGH' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: safetyMap[config.safetySettings] || 'BLOCK_ONLY_HIGH' }
+      ]
+    };
+
+    const response = await fetch(fetchUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      saveLog({ timestamp: new Date().toISOString(), action: 'gemini_error', error: errText, user: req.user.username });
+      return res.status(502).json({ error: 'Error de Gemini API', details: errText });
+    }
+
+    const geminiResult = await response.json();
+    const textContent = geminiResult?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Try to parse JSON from response
+    let parsedResult;
+    try {
+      parsedResult = JSON.parse(textContent);
+    } catch {
+      parsedResult = { rawResponse: textContent };
+    }
+
+    // Log the analysis
+    saveLog({
+      timestamp: new Date().toISOString(),
+      action: 'gemini_analysis',
+      analysisType: type,
+      model: model,
+      tokensUsed: geminiResult?.usageMetadata?.totalTokenCount || 0,
+      result: parsedResult,
+      user: req.user.username
+    });
+
+    // Update Gemini quota in config
+    const db = loadDB();
+    const geminiApi = db.apis.find(a => a.id === 'gemini-ai');
+    if (geminiApi) {
+      geminiApi.quotas.used = (geminiApi.quotas.used || 0) + 1;
+      geminiApi.lastTested = new Date().toISOString();
+      geminiApi.lastStatus = 'success';
+      saveDB(db);
+    }
+
+    res.json({
+      success: true,
+      type,
+      model,
+      analysis: parsedResult,
+      tokensUsed: geminiResult?.usageMetadata?.totalTokenCount || 0,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    saveLog({ timestamp: new Date().toISOString(), action: 'gemini_exception', error: error.message, user: req.user.username });
+    res.status(500).json({ error: 'Error interno de Gemini', details: error.message });
+  }
+});
+
+// POST /api/gemini/test — Test Gemini connection
+app.post('/api/gemini/test', authMiddleware, async (req, res) => {
+  const config = getGeminiConfig();
+  if (!config) {
+    return res.status(400).json({ error: 'Gemini AI no configurado', configured: false });
+  }
+
+  try {
+    const fetchUrl = `${GEMINI_API_URL}/v1beta/models/${config.model}:generateContent?key=${config.apiKey}`;
+    const body = {
+      contents: [{ parts: [{ text: 'Responde solo: {"status":"ok","message":"Gemini conectado a Movilidad TripCheck AI"}' }] }],
+      generationConfig: { temperature: 0, maxOutputTokens: 100, responseMimeType: 'application/json' }
+    };
+
+    const response = await fetch(fetchUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      // Update config health
+      const db = loadDB();
+      const geminiApi = db.apis.find(a => a.id === 'gemini-ai');
+      if (geminiApi) { geminiApi.health = 'error'; geminiApi.lastStatus = 'connection_failed'; geminiApi.lastTested = new Date().toISOString(); saveDB(db); }
+      return res.status(502).json({ error: 'Conexión fallida', details: errText, configured: true, connected: false });
+    }
+
+    const result = await response.json();
+
+    // Update config health
+    const db = loadDB();
+    const geminiApi = db.apis.find(a => a.id === 'gemini-ai');
+    if (geminiApi) { geminiApi.health = 'healthy'; geminiApi.lastStatus = 'connected'; geminiApi.lastTested = new Date().toISOString(); saveDB(db); }
+
+    saveLog({ timestamp: new Date().toISOString(), action: 'gemini_test', result: 'success', model: config.model, user: req.user.username });
+
+    res.json({
+      configured: true,
+      connected: true,
+      model: config.model,
+      response: result?.candidates?.[0]?.content?.parts?.[0]?.text || 'OK',
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error de conexión', details: error.message, configured: true, connected: false });
+  }
+});
+
+// GET /api/gemini/status — Gemini status
+app.get('/api/gemini/status', authMiddleware, (req, res) => {
+  const config = getGeminiConfig();
+  const db = loadDB();
+  const geminiApi = db.apis.find(a => a.id === 'gemini-ai');
+
+  res.json({
+    configured: !!config,
+    hasApiKey: !!(config?.apiKey),
+    model: config?.model || geminiApi?.credentials?.model?.value || 'gemini-pro',
+    enabled: geminiApi?.enabled || false,
+    health: geminiApi?.health || 'unknown',
+    lastTested: geminiApi?.lastTested || null,
+    quotas: geminiApi?.quotas || { daily: 1500, used: 0, unit: 'requests/day' },
+    analysisTypes: ['route-deviation', 'speed-anomaly', 'incident-detection', 'safety-score', 'ride-safety-check']
+  });
+});
+
 // Start server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   initDB();
   console.log(`\n🚗 Movilidad API Config Server — By TheFirm69 Systems`);
   console.log(`   Running on http://localhost:${PORT}`);
-  console.log(`   Endpoints: /api/configs, /api/health, /api/logs\n`);
+  console.log(`   Endpoints: /api/configs, /api/health, /api/logs, /api/gemini/*\n`);
 });

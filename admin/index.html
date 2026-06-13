@@ -377,6 +377,22 @@
         <!-- Health Summary -->
         <div id="api-health-summary" class="card" style="margin-bottom:16px; padding:16px;"></div>
 
+        <!-- GEMINI AI STATUS BANNER -->
+        <div id="gemini-status-banner" style="background:linear-gradient(135deg,#1A1A2E,#16213E,#0F3460); border:1px solid rgba(124,58,237,.3); border-radius:16px; padding:20px 24px; margin-bottom:16px; display:flex; align-items:center; gap:20px;">
+          <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#7C3AED,#4285F4);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">🧠</div>
+          <div style="flex:1;">
+            <h3 style="color:#fff;font-size:16px;font-weight:800;margin-bottom:4px;">Google Gemini AI — TripCheck Engine</h3>
+            <p style="color:rgba(255,255,255,.6);font-size:12px;">Motor de IA para supervisión inteligente de viajes, detección de anomalías y safety scoring en tiempo real</p>
+            <div id="gemini-status-info" style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;">
+              <span style="color:rgba(255,255,255,.5);font-size:11px;">⏳ Cargando estado...</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+            <button onclick="testGeminiConnection()" style="background:linear-gradient(135deg,#7C3AED,#4285F4);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">🧪 Probar Gemini</button>
+            <button onclick="openApiDetail('gemini-ai')" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);padding:8px 16px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;transition:all .3s;" onmouseover="this.style.background='rgba(255,255,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">⚙️ Configurar</button>
+          </div>
+        </div>
+
         <!-- Action Bar -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
           <h3 style="font-size:15px; font-weight:800;">🧩 Configuración de APIs y Servicios</h3>
@@ -476,6 +492,18 @@
 
       <!-- ===== TRIPCHECK AI ENGINE ===== -->
       <div class="page" id="page-tripcheck">
+        <!-- GEMINI AI POWERED BANNER -->
+        <div style="background:linear-gradient(135deg,#1A1A2E,#16213E,#0F3460); border:1px solid rgba(124,58,237,.3); border-radius:14px; padding:16px 20px; margin-bottom:16px; display:flex; align-items:center; gap:16px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#7C3AED,#4285F4);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🧠</div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <h3 style="color:#fff;font-size:14px;font-weight:800;">Powered by Google Gemini AI</h3>
+              <span id="gemini-page-status" style="background:rgba(245,158,11,.2);color:#F59E0B;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;">SIN API KEY</span>
+            </div>
+            <p style="color:rgba(255,255,255,.5);font-size:11px;">Configura tu API Key en <a href="#" onclick="showPage('api-config');return false;" style="color:#A78BFA;font-weight:600;">API Config → Gemini AI</a> para activar el análisis inteligente</p>
+          </div>
+          <button onclick="testGeminiFromTripCheck()" style="background:linear-gradient(135deg,#7C3AED,#4285F4);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">🧪 Test</button>
+        </div>
         <div class="stat-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:20px;">
           <div class="stat-card"><div class="sc-label">Riesgo en Tiempo Real</div><div class="sc-value" style="color:var(--success);">Bajo</div><div class="sc-change up"><i class="fas fa-shield-alt"></i> 12 incidentes hoy</div></div>
           <div class="stat-card"><div class="sc-label">Desviaciones de Ruta</div><div class="sc-value">3</div><div class="sc-change down"><i class="fas fa-route"></i> 2 en investigación</div></div>
