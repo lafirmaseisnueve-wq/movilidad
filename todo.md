@@ -46,3 +46,14 @@
 - [x] Driver/Passenger apps show Gemini branding
 - [x] Git commit and push
 - [x] Production ZIP backup updated
+
+## Phase 11: API Placeholders & Help Text ✅
+- [x] Execute fix_placeholders.py — 80 credentials updated across 17 APIs
+- [x] Specific placeholder examples (AIzaSyB-..., pk_test_..., etc.)
+- [x] Help text for every credential (where to obtain each key)
+- [x] Update api-config.js openApiDetail() to render help text (💡) below inputs
+- [x] Verified in browser: Gemini AI modal shows all 6 placeholders + help
+- [x] Verified in browser: Firebase Auth modal shows all 7 placeholders + help
+- [x] Verified in browser: Stripe modal shows all 4 placeholders + help
+- [x] Password fields show 👁️ toggle + help text
+- [x] Git commit and push
