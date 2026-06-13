@@ -235,12 +235,14 @@ async function openApiDetail(id) {
     } else {
       inputHtml = `<input type="${isPassword?'password':'text'}" id="cred-${key}" value="${c.value||''}" placeholder="${c.placeholder||''}" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:var(--radius);font-size:13px;" ${isNumber?'inputmode="numeric"':''} />`;
     }
+    const helpHtml = c.help ? `<div class="cred-help" style="font-size:11px;color:#a78bfa;margin-top:4px;padding:0 2px;line-height:1.4;display:flex;align-items:flex-start;gap:4px;"><span style="flex-shrink:0;">💡</span><span>${c.help}</span></div>` : '';
     return `<div class="cred-field">
       <label>${c.label} ${reqMark}</label>
       <div class="cred-input-wrap">
         ${inputHtml}
         ${isPassword?`<button class="cred-toggle-vis" onclick="toggleCredVis('cred-${key}')">👁️</button>`:''}
       </div>
+      ${helpHtml}
     </div>`;
   }).join('');
 
