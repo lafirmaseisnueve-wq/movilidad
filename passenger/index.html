@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movilidad - Pasajero</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .app-container { display:flex; justify-content:center; align-items:center; min-height:100vh; background:var(--primary-900); padding:20px; }
+    .phone-frame { width:390px; height:844px; background:var(--bg); border-radius:44px; overflow:hidden; position:relative; box-shadow:0 30px 80px rgba(0,0,0,.5); border:6px solid #222; }
+    .phone-frame::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:28px; background:#222; border-radius:0 0 18px 18px; z-index:200; }
+    .screen { position:absolute; top:0; left:0; width:100%; height:100%; transition:transform .35s ease, opacity .35s ease; }
+    .screen.hidden-right { transform:translateX(100%); opacity:0; pointer-events:none; }
+    .screen.hidden-left { transform:translateX(-100%); opacity:0; pointer-events:none; }
+    .screen.active { transform:translateX(0); opacity:1; }
+    
+    /* Status bar */
+    .sbar { display:flex; justify-content:space-between; padding:36px 24px 8px; font-size:13px; font-weight:600; background:var(--surface); position:relative; z-index:50; }
+    .sbar-dark { background:var(--primary-900); color:#fff; }
+
+    /* Screen 1: Home */
+    .home-search { padding:16px 20px; }
+    .search-bar { background:var(--surface); border-radius:16px; padding:14px 18px; display:flex; align-items:center; gap:12px; box-shadow:var(--shadow-lg); cursor:pointer; margin-bottom:16px; }
+    .search-bar i { color:var(--primary); font-size:18px; }
+    .search-bar span { color:var(--text-light); font-size:15px; }
+    .quick-places { display:flex; gap:10px; padding:0 20px 12px; }
+    .quick-place { flex:1; background:var(--surface); border-radius:12px; padding:10px; text-align:center; box-shadow:var(--shadow); cursor:pointer; transition:var(--transition); }
+    .quick-place:hover { background:var(--primary-50); }
+    .quick-place i { font-size:20px; color:var(--primary); display:block; margin-bottom:4px; }
+    .quick-place span { font-size:11px; font-weight:600; color:var(--text-secondary); }
+    .saved-places { padding:8px 20px; }
+    .saved-places h4 { font-size:12px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+    .saved-item { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+    .saved-item .icon-box { width:36px; height:36px; border-radius:10px; background:var(--primary-50); display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:14px; }
+    .saved-item .info { flex:1; }
+    .saved-item .info .name { font-weight:600; font-size:14px; }
+    .saved-item .info .addr { font-size:11px; color:var(--text-light); }
+    .promo-banner { margin:16px 20px; background:linear-gradient(135deg, var(--primary), #EC4899); border-radius:16px; padding:16px 20px; color:#fff; display:flex; align-items:center; gap:12px; }
+    .promo-banner i { font-size:28px; }
+    .promo-banner .promo-text { flex:1; }
+    .promo-banner .promo-text h5 { font-size:14px; font-weight:700; }
+    .promo-banner .promo-text p { font-size:11px; opacity:.8; }
+
+    /* Screen 2: Ride Select */
+    #map-route { width:100%; height:45%; z-index:1; }
+    .ride-panel { position:absolute; bottom:0; left:0; right:0; background:var(--surface); border-radius:24px 24px 0 0; padding:20px; z-index:10; max-height:55%; overflow-y:auto; box-shadow:0 -4px 20px rgba(0,0,0,.1); }
+    .ride-panel .handle { width:40px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 16px; }
+    .ride-panel .route-info { display:flex; align-items:center; gap:10px; margin-bottom:16px; padding:0 4px; }
+    .ride-panel .route-info .dot { width:10px; height:10px; border-radius:50%; }
+    .ride-panel .route-info .dot-green { background:var(--success); }
+    .ride-panel .route-info .dot-red { background:var(--danger); }
+    .ride-panel .route-info .line { width:1px; height:20px; background:var(--border); margin-left:4px; }
+    .ride-panel .route-info .place { font-size:13px; font-weight:500; flex:1; }
+    .ride-cat { display:flex; align-items:center; padding:14px 0; border-bottom:1px solid var(--primary-50); cursor:pointer; transition:var(--transition); }
+    .ride-cat:hover, .ride-cat.selected { background:var(--primary-50); border-radius:12px; padding:14px 12px; margin:0 -12px; }
+    .ride-cat .cat-icon { width:48px; height:32px; margin-right:14px; display:flex; align-items:center; justify-content:center; font-size:24px; }
+    .ride-cat .cat-info { flex:1; }
+    .ride-cat .cat-info .cat-name { font-weight:700; font-size:15px; }
+    .ride-cat .cat-info .cat-desc { font-size:11px; color:var(--text-secondary); }
+    .ride-cat .cat-price { text-align:right; }
+    .ride-cat .cat-price .price { font-weight:800; font-size:17px; }
+    .ride-cat .cat-price .eta { font-size:11px; color:var(--text-secondary); }
+    .surge-indicator { background:linear-gradient(135deg, var(--primary), #EC4899); color:#fff; padding:4px 10px; border-radius:10px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px; animation:pulse-surge 2s infinite; }
+
+    /* Screen 3: Multi-category */
+    .multi-header { padding:36px 20px 12px; background:var(--primary-900); color:#fff; }
+    .multi-header h3 { font-size:18px; font-weight:700; margin-bottom:4px; }
+    .multi-header p { font-size:12px; opacity:.7; }
+    .multi-list { padding:16px 20px; }
+    .multi-item { display:flex; align-items:center; padding:14px; border:2px solid var(--border); border-radius:14px; margin-bottom:10px; cursor:pointer; transition:var(--transition); }
+    .multi-item.checked { border-color:var(--primary); background:var(--primary-50); }
+    .multi-item .mi-icon { font-size:28px; margin-right:14px; width:40px; text-align:center; }
+    .multi-item .mi-info { flex:1; }
+    .multi-item .mi-info .mi-name { font-weight:700; font-size:14px; }
+    .multi-item .mi-info .mi-detail { font-size:11px; color:var(--text-secondary); }
+    .multi-item .mi-price { font-weight:800; font-size:16px; }
+    .multi-item .mi-check { width:24px; height:24px; border:2px solid var(--border); border-radius:50%; margin-left:10px; display:flex; align-items:center; justify-content:center; }
+    .multi-item.checked .mi-check { background:var(--primary); border-color:var(--primary); color:#fff; }
+
+    /* Screen 4: Safety */
+    .safety-screen { padding:36px 20px 20px; background:var(--surface); }
+    .safety-screen h3 { font-size:22px; font-weight:800; margin-bottom:4px; }
+    .safety-screen .subtitle { font-size:13px; color:var(--text-secondary); margin-bottom:20px; }
+    .sos-big { width:100%; padding:28px; background:linear-gradient(135deg, #EF4444, #DC2626); border-radius:20px; color:#fff; text-align:center; margin-bottom:20px; cursor:pointer; transition:var(--transition); }
+    .sos-big:hover { transform:scale(1.02); }
+    .sos-big .sos-icon { font-size:48px; margin-bottom:8px; }
+    .sos-big h4 { font-size:20px; font-weight:800; }
+    .sos-big p { font-size:12px; opacity:.8; }
+    .safety-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .safety-card { background:var(--primary-50); border-radius:14px; padding:16px; text-align:center; cursor:pointer; transition:var(--transition); border:1px solid var(--primary-100); }
+    .safety-card:hover { background:var(--primary-100); }
+    .safety-card i { font-size:24px; color:var(--primary); display:block; margin-bottom:8px; }
+    .safety-card h5 { font-size:13px; font-weight:700; margin-bottom:2px; }
+    .safety-card p { font-size:10px; color:var(--text-secondary); }
+    .contacts-section { margin-top:20px; }
+    .contacts-section h4 { font-size:14px; font-weight:700; margin-bottom:12px; }
+    .contact-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+    .contact-item .avatar { width:36px; height:36px; border-radius:50%; background:var(--primary-100); display:flex; align-items:center; justify-content:center; font-size:16px; }
+    .contact-item .c-info { flex:1; }
+    .contact-item .c-info .c-name { font-weight:600; font-size:13px; }
+    .contact-item .c-info .c-rel { font-size:11px; color:var(--text-light); }
+
+    /* Screen 5: Payments */
+    .payment-screen { padding:36px 20px 20px; }
+    .pay-header { display:flex; align-items:center; margin-bottom:20px; }
+    .pay-header h3 { font-size:20px; font-weight:800; flex:1; }
+    .pay-method { display:flex; align-items:center; padding:14px; border:2px solid var(--border); border-radius:14px; margin-bottom:10px; cursor:pointer; transition:var(--transition); }
+    .pay-method.selected { border-color:var(--primary); background:var(--primary-50); }
+    .pay-method .pm-icon { width:40px; height:28px; margin-right:12px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+    .pay-method .pm-info { flex:1; }
+    .pay-method .pm-info .pm-name { font-weight:600; font-size:14px; }
+    .pay-method .pm-info .pm-detail { font-size:11px; color:var(--text-light); }
+    .coupon-section { margin-top:20px; }
+    .coupon-input { display:flex; gap:8px; }
+    .coupon-input input { flex:1; padding:12px 16px; border:2px solid var(--border); border-radius:12px; font-size:14px; }
+    .coupon-input input:focus { border-color:var(--primary); }
+    .coupon-input button { padding:12px 20px; background:var(--primary); color:#fff; border-radius:12px; font-weight:700; font-size:13px; }
+    .coupon-card { background:linear-gradient(135deg, var(--primary), #6D28D9); border-radius:14px; padding:16px; color:#fff; margin-top:12px; display:flex; align-items:center; gap:12px; }
+    .coupon-card i { font-size:28px; }
+    .coupon-card .cc-info h5 { font-size:14px; font-weight:700; }
+    .coupon-card .cc-info p { font-size:11px; opacity:.8; }
+
+    /* Screen 6: Ride Tracking */
+    .tracking-map { width:100%; height:60%; }
+    .tracking-panel { position:absolute; bottom:0; left:0; right:0; background:var(--surface); border-radius:24px 24px 0 0; padding:20px; z-index:10; }
+    .driver-card { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+    .driver-card .d-avatar { width:48px; height:48px; border-radius:50%; background:var(--primary-100); display:flex; align-items:center; justify-content:center; font-size:22px; }
+    .driver-card .d-info { flex:1; }
+    .driver-card .d-info .d-name { font-weight:700; font-size:15px; }
+    .driver-card .d-info .d-vehicle { font-size:12px; color:var(--text-secondary); }
+    .driver-card .d-info .d-plate { font-weight:700; color:var(--primary); }
+    .driver-card .d-actions { display:flex; gap:8px; }
+    .driver-card .d-actions button { width:40px; height:40px; border-radius:50%; border:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--primary); cursor:pointer; }
+    .trip-progress { margin-top:12px; }
+    .trip-progress .step { display:flex; align-items:center; gap:10px; padding:8px 0; }
+    .trip-progress .step .step-dot { width:12px; height:12px; border-radius:50%; border:2px solid var(--border); }
+    .trip-progress .step .step-dot.active { background:var(--primary); border-color:var(--primary); }
+    .trip-progress .step .step-dot.done { background:var(--success); border-color:var(--success); }
+    .trip-progress .step .step-label { font-size:13px; }
+
+    /* Screen 7: Rating */
+    .rating-screen { padding:36px 20px; text-align:center; }
+    .rating-screen h3 { font-size:20px; font-weight:800; margin-bottom:20px; }
+    .rating-stars { display:flex; justify-content:center; gap:12px; margin-bottom:24px; }
+    .rating-stars .star { font-size:40px; color:var(--primary-200); cursor:pointer; transition:var(--transition); }
+    .rating-stars .star.active { color:var(--accent); }
+    .rating-tip { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:20px; }
+    .rating-tip span { padding:6px 14px; border:1px solid var(--border); border-radius:20px; font-size:12px; cursor:pointer; transition:var(--transition); }
+    .rating-tip span.selected { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .comment-box { width:100%; height:80px; border:2px solid var(--border); border-radius:12px; padding:12px; font-size:13px; resize:none; }
+    .comment-box:focus { border-color:var(--primary); }
+
+    /* Bottom nav */
+    .bottom-nav { position:absolute; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; justify-content:space-around; padding:8px 0 28px; z-index:100; }
+    .nav-tab { display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; color:var(--text-light); cursor:pointer; padding:4px 8px; }
+    .nav-tab.active { color:var(--primary); }
+    .nav-tab i { font-size:20px; }
+
+    /* History */
+    .history-screen { padding:36px 20px 20px; }
+    .history-item { display:flex; align-items:center; padding:14px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+    .history-item .h-icon { width:40px; height:40px; border-radius:12px; background:var(--primary-50); display:flex; align-items:center; justify-content:center; color:var(--primary); margin-right:12px; }
+    .history-item .h-info { flex:1; }
+    .history-item .h-info .h-route { font-weight:600; font-size:13px; }
+    .history-item .h-info .h-date { font-size:11px; color:var(--text-light); }
+    .history-item .h-price { font-weight:700; font-size:14px; }
+
+    @media(max-width:440px) {
+      .app-container { padding:0; background:var(--bg); }
+      .phone-frame { width:100%; height:100vh; border-radius:0; border:none; }
+      .phone-frame::before { display:none; }
+    }
+  </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <div class="phone-frame">
+      <!-- ========== SCREEN 1: HOME ========== -->
+      <div class="screen active" id="screen-home">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+
+        <div style="padding:8px 20px 12px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:12px; color:var(--text-secondary);">Buenos días</div>
+            <div style="font-size:18px; font-weight:800;">¿A dónde vas?</div>
+          </div>
+          <div class="avatar" style="cursor:pointer;" onclick="showScreen('screen-profile')">👩</div>
+        </div>
+
+        <div class="home-search">
+          <div class="search-bar" onclick="showScreen('screen-search')">
+            <i class="fas fa-search"></i>
+            <span>¿A dónde vas?</span>
+            <span style="margin-left:auto; color:var(--primary); font-size:12px; font-weight:600;">+ Agregar</span>
+          </div>
+        </div>
+
+        <div class="quick-places">
+          <div class="quick-place" onclick="selectQuickPlace('Casa')">
+            <i class="fas fa-home"></i>
+            <span>Casa</span>
+          </div>
+          <div class="quick-place" onclick="selectQuickPlace('Trabajo')">
+            <i class="fas fa-briefcase"></i>
+            <span>Trabajo</span>
+          </div>
+          <div class="quick-place" onclick="selectQuickPlace('Favorito')">
+            <i class="fas fa-heart"></i>
+            <span>Favorito</span>
+          </div>
+          <div class="quick-place" onclick="showScreen('screen-schedule')">
+            <i class="fas fa-clock"></i>
+            <span>Agendar</span>
+          </div>
+        </div>
+
+        <div class="promo-banner" onclick="showScreen('screen-payments')">
+          <i class="fas fa-gift"></i>
+          <div class="promo-text">
+            <h5>50% de descuento en tu próximo viaje</h5>
+            <p>Usa el código MOVILIDAD50 · Válido hoy</p>
+          </div>
+        </div>
+
+        <div class="saved-places">
+          <h4>Lugares guardados</h4>
+          <div class="saved-item" onclick="selectDestination('Polanco')">
+            <div class="icon-box"><i class="fas fa-home"></i></div>
+            <div class="info">
+              <div class="name">Casa</div>
+              <div class="addr">Av. Presidente Masaryk 123, Polanco</div>
+            </div>
+          </div>
+          <div class="saved-item" onclick="selectDestination('Condesa')">
+            <div class="icon-box"><i class="fas fa-briefcase"></i></div>
+            <div class="info">
+              <div class="name">Trabajo</div>
+              <div class="addr">Av. Michoacán 45, Condesa</div>
+            </div>
+          </div>
+          <div class="saved-item" onclick="selectDestination('AICM')">
+            <div class="icon-box" style="background:#FEF3C7; color:#F59E0B;"><i class="fas fa-plane"></i></div>
+            <div class="info">
+              <div class="name">Aeropuerto AICM</div>
+              <div class="addr">Cap. Carlos León, CDMX</div>
+            </div>
+          </div>
+          <div class="saved-item" onclick="selectDestination('Roma Norte')">
+            <div class="icon-box" style="background:#DBEAFE; color:#3B82F6;"><i class="fas fa-coffee"></i></div>
+            <div class="info">
+              <div class="name">Café Roma</div>
+              <div class="addr">Calle Orizaba 88, Roma Norte</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-nav">
+          <div class="nav-tab active"><i class="fas fa-home"></i><span>Inicio</span></div>
+          <div class="nav-tab" onclick="showScreen('screen-activity')"><i class="fas fa-clock"></i><span>Actividad</span></div>
+          <div class="nav-tab" onclick="showScreen('screen-safety')"><i class="fas fa-shield-alt"></i><span>Seguridad</span></div>
+          <div class="nav-tab" onclick="showScreen('screen-payments')"><i class="fas fa-wallet"></i><span>Pagos</span></div>
+          <div class="nav-tab"><i class="fas fa-cog"></i><span>Ajustes</span></div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 2: RIDE SELECT ========== -->
+      <div class="screen hidden-right" id="screen-ride">
+        <div id="map-route"></div>
+        <div class="ride-panel">
+          <div class="handle"></div>
+          <div class="route-info">
+            <div class="dot dot-green"></div>
+            <div class="place" id="pickup-name">Mi ubicación</div>
+          </div>
+          <div class="route-info">
+            <div class="dot dot-red"></div>
+            <div class="place" id="dest-name">Destino</div>
+          </div>
+
+          <div id="surge-banner" style="display:none; margin-bottom:12px;">
+            <span class="surge-indicator"><i class="fas fa-bolt"></i> Tarifa dinámica ×1.5 activa</span>
+          </div>
+
+          <div class="ride-cat selected" onclick="selectCategory(this, 'express')">
+            <div class="cat-icon">🚗</div>
+            <div class="cat-info">
+              <div class="cat-name">Movilidad Express</div>
+              <div class="cat-desc">4 pasajeros · Viaje estándar</div>
+            </div>
+            <div class="cat-price">
+              <div class="price">$92</div>
+              <div class="eta">10 min</div>
+            </div>
+          </div>
+          <div class="ride-cat" onclick="selectCategory(this, 'comfort')">
+            <div class="cat-icon">✨</div>
+            <div class="cat-info">
+              <div class="cat-name">Movilidad Comfort</div>
+              <div class="cat-desc">4 pasajeros · Autos premium</div>
+            </div>
+            <div class="cat-price">
+              <div class="price">$125</div>
+              <div class="eta">12 min</div>
+            </div>
+          </div>
+          <div class="ride-cat" onclick="selectCategory(this, 'pon-precio')">
+            <div class="cat-icon">💰</div>
+            <div class="cat-info">
+              <div class="cat-name">Pon tu Precio</div>
+              <div class="cat-desc">Negocia tu tarifa</div>
+            </div>
+            <div class="cat-price">
+              <div class="price">Proponer</div>
+              <div class="eta">~8 min</div>
+            </div>
+          </div>
+          <div class="ride-cat" onclick="selectCategory(this, 'taxi')">
+            <div class="cat-icon">🚕</div>
+            <div class="cat-info">
+              <div class="cat-name">Movilidad Taxi</div>
+              <div class="cat-desc">Taxímetro oficial</div>
+            </div>
+            <div class="cat-price">
+              <div class="price">Taxímetro</div>
+              <div class="eta">6 min</div>
+            </div>
+          </div>
+          <div class="ride-cat" onclick="selectCategory(this, 'moto')">
+            <div class="cat-icon">🏍️</div>
+            <div class="cat-info">
+              <div class="cat-name">Movilidad Moto</div>
+              <div class="cat-desc">1 pasajero · Esquiva tráfico</div>
+            </div>
+            <div class="cat-price">
+              <div class="price">$52</div>
+              <div class="eta">4 min</div>
+            </div>
+          </div>
+          <div class="ride-cat" onclick="selectCategory(this, 'protect')">
+            <div class="cat-icon">🛡️</div>
+            <div class="cat-info">
+              <div class="cat-name">Movilidad Protect</div>
+              <div class="cat-desc">Viaje económico seguro</div>
+            </div>
+            <div class="cat-price">
+              <div class="price">$78</div>
+              <div class="eta">10 min</div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
+            <div style="flex:1; font-size:12px; color:var(--text-secondary);"><i class="fas fa-credit-card" style="color:var(--primary);"></i> Visa •••4242</div>
+            <div style="font-size:12px; color:var(--primary); font-weight:600; cursor:pointer;" onclick="showScreen('screen-payments')">Cambiar</div>
+          </div>
+
+          <button class="btn btn-primary btn-block btn-lg" style="margin-top:12px;" onclick="requestRide()">
+            Solicitar Movilidad Express · $92
+          </button>
+          <div style="text-align:center; margin-top:8px;">
+            <span style="font-size:11px; color:var(--text-light); cursor:pointer;" onclick="showScreen('screen-multi')">Solicitar múltiples categorías</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 3: MULTI-CATEGORY ========== -->
+      <div class="screen hidden-right" id="screen-multi">
+        <div class="multi-header">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <i class="fas fa-arrow-left" style="cursor:pointer;" onclick="showScreen('screen-ride', 'left')"></i>
+            <h3 style="flex:1; margin:0;">Selecciona Múltiples</h3>
+          </div>
+          <p>Solicita varias categorías al mismo tiempo y te asignamos la más rápida.</p>
+        </div>
+        <div class="multi-list" id="multi-list">
+          <!-- Populated by JS -->
+        </div>
+        <div style="position:absolute; bottom:0; left:0; right:0; padding:16px 20px 32px; background:var(--surface); border-top:1px solid var(--border);">
+          <button class="btn btn-primary btn-block btn-lg" id="multi-btn" onclick="requestMultiCategory()">
+            Selecciona 2 categorías
+          </button>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 4: SAFETY ========== -->
+      <div class="screen hidden-right" id="screen-safety">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="safety-screen">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+            <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-home', 'left')"></i>
+            <h3 style="font-size:22px; font-weight:800;">Kit de Seguridad</h3>
+          </div>
+          <div class="sos-big" onclick="triggerSOS()">
+            <div class="sos-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <h4>BOTÓN SOS</h4>
+            <p>Toca para contactar emergencias</p>
+          </div>
+          <div class="safety-grid">
+            <div class="safety-card" onclick="shareTrip()">
+              <i class="fas fa-share-alt"></i>
+              <h5>Compartir Viaje</h5>
+              <p>Envía tu ubicación en vivo</p>
+            </div>
+            <div class="safety-card" onclick="showTripCheck()">
+              <i class="fas fa-route"></i>
+              <h5>TripCheck</h5>
+              <p>Monitoreo de desvíos</p>
+            </div>
+            <div class="safety-card">
+              <i class="fas fa-user-shield"></i>
+              <h5>Llamadas Enmascaradas</h5>
+              <p>Tu número es privado</p>
+            </div>
+            <div class="safety-card" onclick="showEmergencyContacts()">
+              <i class="fas fa-address-book"></i>
+              <h5>Contactos de Confianza</h5>
+              <p>Alertas automáticas</p>
+            </div>
+          </div>
+          <div class="contacts-section">
+            <h4>Contactos de Confianza</h4>
+            <div class="contact-item">
+              <div class="avatar">👩</div>
+              <div class="c-info"><div class="c-name">Mamá</div><div class="c-rel">Familiar</div></div>
+              <span class="badge badge-success">Activo</span>
+            </div>
+            <div class="contact-item">
+              <div class="avatar">👨</div>
+              <div class="c-info"><div class="c-name">Carlos</div><div class="c-rel">Amigo</div></div>
+              <span class="badge badge-success">Activo</span>
+            </div>
+            <button class="btn btn-secondary btn-sm mt-3" onclick="addEmergencyContact()"><i class="fas fa-plus"></i> Agregar contacto</button>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-tab" onclick="showScreen('screen-home', 'left')"><i class="fas fa-home"></i><span>Inicio</span></div>
+          <div class="nav-tab" onclick="showScreen('screen-activity')"><i class="fas fa-clock"></i><span>Actividad</span></div>
+          <div class="nav-tab active"><i class="fas fa-shield-alt"></i><span>Seguridad</span></div>
+          <div class="nav-tab" onclick="showScreen('screen-payments')"><i class="fas fa-wallet"></i><span>Pagos</span></div>
+          <div class="nav-tab"><i class="fas fa-cog"></i><span>Ajustes</span></div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 5: PAYMENTS ========== -->
+      <div class="screen hidden-right" id="screen-payments">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="payment-screen">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+            <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-home', 'left')"></i>
+            <h3 style="font-size:20px; font-weight:800; flex:1;">Pagos y Promociones</h3>
+          </div>
+
+          <h4 style="font-size:13px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px;">Métodos de pago</h4>
+          <div class="pay-method selected" onclick="selectPayMethod(this)">
+            <div class="pm-icon">💳</div>
+            <div class="pm-info"><div class="pm-name">Visa •••4242</div><div class="pm-detail">Predeterminado</div></div>
+            <i class="fas fa-check-circle" style="color:var(--primary);"></i>
+          </div>
+          <div class="pay-method" onclick="selectPayMethod(this)">
+            <div class="pm-icon">💳</div>
+            <div class="pm-info"><div class="pm-name">Mastercard •••8371</div><div class="pm-detail">Débito</div></div>
+          </div>
+          <div class="pay-method" onclick="selectPayMethod(this)">
+            <div class="pm-icon">📱</div>
+            <div class="pm-info"><div class="pm-name">PayPal</div><div class="pm-detail">usuario@email.com</div></div>
+          </div>
+          <div class="pay-method" onclick="selectPayMethod(this)">
+            <div class="pm-icon">💵</div>
+            <div class="pm-info"><div class="pm-name">Efectivo</div><div class="pm-detail">Paga al conductor</div></div>
+          </div>
+          <div class="pay-method" onclick="selectPayMethod(this)">
+            <div class="pm-icon">🏦</div>
+            <div class="pm-info"><div class="pm-name">Movilidad Card</div><div class="pm-detail">Tarjeta de la plataforma</div></div>
+          </div>
+          <button class="btn btn-ghost btn-sm btn-block mt-3"><i class="fas fa-plus"></i> Agregar método de pago</button>
+
+          <div class="coupon-section">
+            <h4 style="font-size:13px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px;">Cupones y Promociones</h4>
+            <div class="coupon-input">
+              <input type="text" placeholder="Código de cupón" id="coupon-input">
+              <button onclick="applyCoupon()">Aplicar</button>
+            </div>
+            <div class="coupon-card" id="coupon-applied" style="display:none;">
+              <i class="fas fa-check-circle"></i>
+              <div class="cc-info">
+                <h5 id="coupon-title">MOVILIDAD50</h5>
+                <p id="coupon-desc">50% de descuento aplicado</p>
+              </div>
+            </div>
+            <div class="coupon-card" style="margin-top:12px; background:linear-gradient(135deg, #6D28D9, #4C1D95);">
+              <i class="fas fa-gift"></i>
+              <div class="cc-info">
+                <h5>Promo de temporada</h5>
+                <p>$30 MXN de descuento en Express · Expira mañana</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-tab" onclick="showScreen('screen-home', 'left')"><i class="fas fa-home"></i><span>Inicio</span></div>
+          <div class="nav-tab" onclick="showScreen('screen-activity')"><i class="fas fa-clock"></i><span>Actividad</span></div>
+          <div class="nav-tab" onclick="showScreen('screen-safety')"><i class="fas fa-shield-alt"></i><span>Seguridad</span></div>
+          <div class="nav-tab active"><i class="fas fa-wallet"></i><span>Pagos</span></div>
+          <div class="nav-tab"><i class="fas fa-cog"></i><span>Ajustes</span></div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 6: RIDE TRACKING ========== -->
+      <div class="screen hidden-right" id="screen-tracking">
+        <div id="map-tracking" class="tracking-map"></div>
+        <div class="tracking-panel">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+            <span class="live-dot"></span>
+            <span style="font-size:13px; font-weight:600;">Conductor en camino</span>
+            <span style="margin-left:auto; font-size:13px; color:var(--primary); font-weight:700;">4 min</span>
+          </div>
+          <div class="driver-card">
+            <div class="d-avatar">👨</div>
+            <div class="d-info">
+              <div class="d-name">Roberto M.</div>
+              <div class="d-vehicle">Nissan Versa · Blanco</div>
+              <div class="d-plate">M-456 ABC</div>
+            </div>
+            <div class="d-actions">
+              <button onclick="callDriver()" title="Llamar (enmascarado)"><i class="fas fa-phone"></i></button>
+              <button onclick="chatDriver()" title="Chat"><i class="fas fa-comment"></i></button>
+            </div>
+          </div>
+          <div class="trip-progress">
+            <div class="step"><div class="step-dot done"></div><div class="step-label">Viaje solicitado</div></div>
+            <div class="step"><div class="step-dot active"></div><div class="step-label">Conductor en camino · 4 min</div></div>
+            <div class="step"><div class="step-dot"></div><div class="step-label">Recogida</div></div>
+            <div class="step"><div class="step-dot"></div><div class="step-label">En camino al destino</div></div>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:16px;">
+            <button class="btn btn-secondary btn-sm" onclick="shareTrip()" style="flex:1;"><i class="fas fa-share-alt"></i> Compartir</button>
+            <button class="btn btn-danger btn-sm" onclick="cancelRide()" style="flex:1;"><i class="fas fa-times"></i> Cancelar</button>
+            <button class="sos-btn" style="width:44px; height:44px; font-size:14px;" onclick="triggerSOS()"><i class="fas fa-exclamation"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 7: RATING ========== -->
+      <div class="screen hidden-right" id="screen-rating">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="rating-screen">
+          <div style="font-size:64px; margin-bottom:12px;">🎉</div>
+          <h3>¡Viaje completado!</h3>
+          <p style="color:var(--text-secondary); font-size:14px; margin-bottom:8px;">Polanco → Condesa · $92 MXN</p>
+          <p style="font-size:24px; font-weight:800; color:var(--primary); margin-bottom:24px;">$92.00</p>
+          <h4 style="font-size:16px; margin-bottom:12px;">¿Cómo fue tu conductor?</h4>
+          <div class="rating-stars" id="rating-stars">
+            <span class="star" onclick="setRating(1)">★</span>
+            <span class="star" onclick="setRating(2)">★</span>
+            <span class="star" onclick="setRating(3)">★</span>
+            <span class="star" onclick="setRating(4)">★</span>
+            <span class="star active" onclick="setRating(5)">★</span>
+          </div>
+          <div class="rating-tip" id="rating-tips">
+            <span onclick="toggleTip(this)">Conducción segura</span>
+            <span onclick="toggleTip(this)">Amable</span>
+            <span onclick="toggleTip(this)">Limpio</span>
+            <span onclick="toggleTip(this)">Navegación eficiente</span>
+            <span onclick="toggleTip(this)">Buena conversación</span>
+            <span onclick="toggleTip(this)">Llegó rápido</span>
+          </div>
+          <textarea class="comment-box" placeholder="Comentario adicional (opcional)"></textarea>
+          <button class="btn btn-primary btn-block btn-lg mt-4" onclick="submitRating()">Enviar calificación</button>
+          <button class="btn btn-ghost btn-block mt-2" onclick="showScreen('screen-home', 'left')">Omitir</button>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN: ACTIVITY / HISTORY ========== -->
+      <div class="screen hidden-right" id="screen-activity">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="history-screen">
+          <h3 style="font-size:20px; font-weight:800; margin-bottom:16px;">Mi Actividad</h3>
+          <div class="history-item">
+            <div class="h-icon"><i class="fas fa-car"></i></div>
+            <div class="h-info"><div class="h-route">Polanco → Condesa</div><div class="h-date">Hoy, 9:15 AM · Express</div></div>
+            <div class="h-price">$92</div>
+          </div>
+          <div class="history-item">
+            <div class="h-icon"><i class="fas fa-motorcycle"></i></div>
+            <div class="h-info"><div class="h-route">Roma → Centro</div><div class="h-date">Ayer, 6:30 PM · Moto</div></div>
+            <div class="h-price">$52</div>
+          </div>
+          <div class="history-item">
+            <div class="h-icon"><i class="fas fa-car"></i></div>
+            <div class="h-info"><div class="h-route">Casa → AICM</div><div class="h-date">12 Ene, 5:00 AM · Comfort</div></div>
+            <div class="h-price">$285</div>
+          </div>
+          <div class="history-item">
+            <div class="h-icon"><i class="fas fa-taxi"></i></div>
+            <div class="h-info"><div class="h-route">Santa Fe → Del Valle</div><div class="h-date">10 Ene, 8:45 PM · Taxi</div></div>
+            <div class="h-price">$145</div>
+          </div>
+          <div class="history-item">
+            <div class="h-icon"><i class="fas fa-car"></i></div>
+            <div class="h-info"><div class="h-route">Condesa → Polanco</div><div class="h-date">9 Ene, 2:20 PM · Express</div></div>
+            <div class="h-price">$88</div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-tab" onclick="showScreen('screen-home', 'left')"><i class="fas fa-home"></i><span>Inicio</span></div>
+          <div class="nav-tab active"><i class="fas fa-clock"></i><span>Actividad</span></div>
+          <div class="nav-tab" onclick="showScreen('screen-safety')"><i class="fas fa-shield-alt"></i><span>Seguridad</span></div>
+          <div class="nav-tab" onclick="showScreen('screen-payments')"><i class="fas fa-wallet"></i><span>Pagos</span></div>
+          <div class="nav-tab"><i class="fas fa-cog"></i><span>Ajustes</span></div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN: SCHEDULE ========== -->
+      <div class="screen hidden-right" id="screen-schedule">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div style="padding:36px 20px;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+            <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-home', 'left')"></i>
+            <h3 style="font-size:20px; font-weight:800;">Programar Viaje</h3>
+          </div>
+          <div class="input-group">
+            <label>Fecha</label>
+            <input type="date" value="2024-01-16">
+          </div>
+          <div class="input-group">
+            <label>Hora de recogida</label>
+            <input type="time" value="07:30">
+          </div>
+          <div class="input-group">
+            <label>Punto de recogida</label>
+            <input type="text" placeholder="Mi ubicación actual" value="Av. Presidente Masaryk 123, Polanco">
+          </div>
+          <div class="input-group">
+            <label>Destino</label>
+            <input type="text" placeholder="¿A dónde vas?">
+          </div>
+          <div style="display:flex; gap:10px; margin-top:12px;">
+            <div class="ride-cat" style="flex:1; border:2px solid var(--primary); border-radius:12px; padding:12px; text-align:center;" onclick="selectCategory(this,'express')">
+              <div style="font-size:20px;">🚗</div>
+              <div style="font-size:12px; font-weight:600;">Express</div>
+            </div>
+            <div class="ride-cat" style="flex:1; border:2px solid var(--border); border-radius:12px; padding:12px; text-align:center;" onclick="selectCategory(this,'comfort')">
+              <div style="font-size:20px;">✨</div>
+              <div style="font-size:12px; font-weight:600;">Comfort</div>
+            </div>
+            <div class="ride-cat" style="flex:1; border:2px solid var(--border); border-radius:12px; padding:12px; text-align:center;" onclick="selectCategory(this,'moto')">
+              <div style="font-size:20px;">🏍️</div>
+              <div style="font-size:12px; font-weight:600;">Moto</div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block btn-lg mt-6" onclick="scheduleRide()">Programar viaje</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    // ===== SCREEN NAVIGATION =====
+    let currentScreen = 'screen-home';
+    const screenHistory = ['screen-home'];
+
+    function showScreen(id, direction = 'right') {
+      const current = document.getElementById(currentScreen);
+      const next = document.getElementById(id);
+      if (!next || currentScreen === id) return;
+      
+      current.className = direction === 'right' ? 'screen hidden-left' : 'screen hidden-right';
+      next.className = 'screen active';
+      
+      if (direction === 'right') screenHistory.push(id);
+      currentScreen = id;
+
+      // Init maps when screens appear
+      if (id === 'screen-ride') setTimeout(initRideMap, 100);
+      if (id === 'screen-tracking') setTimeout(initTrackingMap, 100);
+      if (id === 'screen-multi') initMultiCategory();
+    }
+
+    function goBack() {
+      screenHistory.pop();
+      const prev = screenHistory[screenHistory.length - 1] || 'screen-home';
+      showScreen(prev, 'left');
+    }
+
+    // ===== RIDE SELECTION =====
+    let selectedCategory = 'express';
+    const categoryPrices = { express: 92, comfort: 125, 'pon-precio': null, taxi: null, moto: 52, protect: 78 };
+
+    function selectCategory(el, cat) {
+      document.querySelectorAll('.ride-cat').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedCategory = cat;
+      const price = categoryPrices[cat];
+      const label = price ? `Solicitar Movilidad ${cat.charAt(0).toUpperCase()+cat.slice(1)} · $${price}` : `Solicitar Movilidad ${cat.charAt(0).toUpperCase()+cat.slice(1)}`;
+      const requestBtn = document.querySelector('#screen-ride .btn-primary');
+      if (requestBtn) requestBtn.textContent = label;
+    }
+
+    function selectDestination(dest) {
+      document.getElementById('dest-name').textContent = dest;
+      showScreen('screen-ride');
+    }
+
+    function selectQuickPlace(place) {
+      const names = { Casa: 'Av. Presidente Masaryk 123', Trabajo: 'Av. Michoacán 45', Favorito: 'Calle Orizaba 88' };
+      document.getElementById('dest-name').textContent = place;
+      showScreen('screen-ride');
+    }
+
+    // ===== MULTI-CATEGORY =====
+    let multiSelected = [];
+    function initMultiCategory() {
+      const list = document.getElementById('multi-list');
+      const cats = [
+        { id: 'share', icon: '🚙', name: 'Movilidad Share', price: '$78', desc: 'Comparte viaje' },
+        { id: 'express', icon: '🚗', name: 'Movilidad Express', price: '$92', desc: '4 pasajeros' },
+        { id: 'taxi', icon: '🚕', name: 'Movilidad Taxi', price: 'Taxímetro', desc: 'Oficial' },
+        { id: 'comfort', icon: '✨', name: 'Movilidad Comfort', price: '$125', desc: 'Premium' },
+        { id: 'top-taxi', icon: '🎩', name: 'Top Taxi', price: '$250', desc: 'Lujo' },
+        { id: 'moto', icon: '🏍️', name: 'Movilidad Moto', price: '$52', desc: '1 pasajero' }
+      ];
+      list.innerHTML = cats.map(c => `
+        <div class="multi-item" onclick="toggleMulti('${c.id}', this)">
+          <div class="mi-icon">${c.icon}</div>
+          <div class="mi-info"><div class="mi-name">${c.name}</div><div class="mi-detail">${c.desc}</div></div>
+          <div class="mi-price">${c.price}</div>
+          <div class="mi-check"><i class="fas fa-check" style="font-size:12px;"></i></div>
+        </div>
+      `).join('');
+      multiSelected = [];
+    }
+
+    function toggleMulti(id, el) {
+      if (multiSelected.includes(id)) {
+        multiSelected = multiSelected.filter(x => x !== id);
+        el.classList.remove('checked');
+      } else {
+        if (multiSelected.length >= 3) return;
+        multiSelected.push(id);
+        el.classList.add('checked');
+      }
+      document.getElementById('multi-btn').textContent = multiSelected.length > 0
+        ? `Solicitar ${multiSelected.length} categorías`
+        : 'Selecciona 2 categorías';
+    }
+
+    // ===== MAP INITIALIZATION =====
+    let rideMap = null, trackingMap = null;
+
+    function initRideMap() {
+      if (rideMap) { rideMap.invalidateSize(); return; }
+      rideMap = L.map('map-route', { zoomControl: false }).setView([19.4326, -99.1332], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(rideMap);
+      
+      // Route line (simplified)
+      const pickup = [19.4326, -99.1332];
+      const dest = [19.4350, -99.1500];
+      L.marker(pickup).addTo(rideMap).bindPopup('📍 Recogida');
+      L.marker(dest).addTo(rideMap).bindPopup('🏁 Destino');
+      L.polyline([pickup, [19.4330, -99.1380], [19.4340, -99.1430], dest], {
+        color: '#7C3AED', weight: 4, opacity: 0.8
+      }).addTo(rideMap);
+      rideMap.fitBounds([pickup, dest], { padding: [50, 50] });
+
+      // Show surge banner randomly
+      if (Math.random() > 0.5) document.getElementById('surge-banner').style.display = 'block';
+    }
+
+    function initTrackingMap() {
+      if (trackingMap) { trackingMap.invalidateSize(); return; }
+      trackingMap = L.map('map-tracking', { zoomControl: false }).setView([19.4326, -99.1332], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(trackingMap);
+      
+      const driverPos = [19.4300, -99.1300];
+      const myPos = [19.4326, -99.1332];
+      L.marker(driverPos, {
+        icon: L.divIcon({ className: '', html: '<div style="background:#7C3AED;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);"></div>', iconSize: [20, 20], iconAnchor: [10, 10] })
+      }).addTo(trackingMap);
+      L.marker(myPos).addTo(trackingMap).bindPopup('📍 Tu ubicación');
+      
+      // Animate driver moving
+      let step = 0;
+      const interval = setInterval(() => {
+        step++;
+        const progress = step / 20;
+        if (progress >= 1) { clearInterval(interval); return; }
+        const newLat = driverPos[0] + (myPos[0] - driverPos[0]) * progress;
+        const newLng = driverPos[1] + (myPos[1] - driverPos[1]) * progress;
+        // Update marker position (simplified)
+      }, 3000);
+    }
+
+    // ===== ACTIONS =====
+    function requestRide() {
+      showScreen('screen-tracking');
+      // Simulate API call
+      console.log('[Movilidad] Ride requested:', { category: selectedCategory, price: categoryPrices[selectedCategory] });
+    }
+
+    function requestMultiCategory() {
+      if (multiSelected.length < 2) { alert('Selecciona al menos 2 categorías'); return; }
+      showScreen('screen-tracking');
+      console.log('[Movilidad] Multi-category requested:', multiSelected);
+    }
+
+    function callDriver() {
+      console.log('[Twilio] Initiating masked call...');
+      alert('📞 Llamada enmascarada iniciada\nTu número real está protegido');
+    }
+
+    function chatDriver() {
+      alert('💬 Chat enmascarado abierto\nLos números permanecen privados');
+    }
+
+    function triggerSOS() {
+      if (confirm('🚨 ¿Activar alerta de emergencia SOS?\n\nSe contactará a las autoridades locales y al equipo de seguridad.')) {
+        console.log('[SOS] Emergency triggered!');
+        alert('🚨 Alerta SOS activada\n\n• Autoridades notificadas\n• Ubicación enviada\n• Audio del vehículo activado (si disponible)\n• Operador de seguridad asignado');
+      }
+    }
+
+    function shareTrip() {
+      const link = 'https://movilidad.app/track/ride_0827';
+      if (navigator.share) {
+        navigator.share({ title: 'Mi viaje en Movilidad', url: link });
+      } else {
+        navigator.clipboard?.writeText(link);
+        alert('🔗 Enlace copiado:\n' + link + '\n\nCompártelo por WhatsApp o SMS');
+      }
+    }
+
+    function showTripCheck() {
+      alert('✅ TripCheck activo\n\nSe monitorea tu ruta en tiempo real.\nRecibirás una alerta si se detecta un desvío inusual o parada prolongada.');
+    }
+
+    function showEmergencyContacts() {}
+    function addEmergencyContact() {
+      const name = prompt('Nombre del contacto:');
+      if (name) alert(`✅ ${name} agregado como contacto de confianza`);
+    }
+
+    function cancelRide() {
+      if (confirm('¿Cancelar viaje?\nSe puede aplicar un cargo de cancelación.')) {
+        showScreen('screen-home', 'left');
+      }
+    }
+
+    function scheduleRide() {
+      alert('✅ Viaje programado con éxito\n\nTe enviaremos una notificación 15 minutos antes.');
+      showScreen('screen-home', 'left');
+    }
+
+    // ===== PAYMENT =====
+    function selectPayMethod(el) {
+      document.querySelectorAll('.pay-method').forEach(p => { p.classList.remove('selected'); p.querySelector('.fa-check-circle')?.remove(); });
+      el.classList.add('selected');
+      const check = document.createElement('i');
+      check.className = 'fas fa-check-circle';
+      check.style.color = 'var(--primary)';
+      el.appendChild(check);
+    }
+
+    function applyCoupon() {
+      const code = document.getElementById('coupon-input').value;
+      if (code) {
+        document.getElementById('coupon-applied').style.display = 'flex';
+        document.getElementById('coupon-title').textContent = code.toUpperCase();
+        document.getElementById('coupon-desc').textContent = '¡Cupón aplicado con éxito!';
+      }
+    }
+
+    // ===== RATING =====
+    let currentRating = 5;
+    function setRating(n) {
+      currentRating = n;
+      document.querySelectorAll('#rating-stars .star').forEach((s, i) => {
+        s.classList.toggle('active', i < n);
+      });
+    }
+
+    function toggleTip(el) {
+      el.classList.toggle('selected');
+    }
+
+    function submitRating() {
+      console.log('[Movilidad] Rating submitted:', currentRating);
+      alert(`✅ ¡Gracias! Calificación: ${currentRating} estrellas\nTu evaluación es anónima.`);
+      showScreen('screen-home', 'left');
+    }
+  </script>
+</body>
+</html>

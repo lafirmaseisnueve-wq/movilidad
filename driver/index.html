@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movilidad - Conductor</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    .app-container { display:flex; justify-content:center; align-items:center; min-height:100vh; background:var(--primary-900); padding:20px; }
+    .phone-frame { width:390px; height:844px; background:#111; border-radius:44px; overflow:hidden; position:relative; box-shadow:0 30px 80px rgba(0,0,0,.5); border:6px solid #222; }
+    .phone-frame::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:28px; background:#222; border-radius:0 0 18px 18px; z-index:200; }
+    .screen { position:absolute; top:0; left:0; width:100%; height:100%; transition:transform .35s ease, opacity .35s ease; }
+    .screen.hidden-right { transform:translateX(100%); opacity:0; pointer-events:none; }
+    .screen.hidden-left { transform:translateX(-100%); opacity:0; pointer-events:none; }
+    .screen.active { transform:translateX(0); opacity:1; }
+    .sbar { display:flex; justify-content:space-between; padding:36px 24px 8px; font-size:13px; font-weight:600; z-index:50; position:relative; }
+    .sbar-light { color:#fff; }
+
+    /* Driver Map Screen */
+    #driver-map { width:100%; height:100%; z-index:1; }
+    .driver-overlay { position:absolute; z-index:10; }
+    .online-toggle { position:absolute; top:36px; left:20px; right:20px; display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,.95); border-radius:16px; padding:12px 16px; box-shadow:var(--shadow-lg); z-index:20; }
+    .online-toggle .ot-status { display:flex; align-items:center; gap:8px; }
+    .online-toggle .ot-status .dot { width:10px; height:10px; border-radius:50%; background:var(--success); }
+    .online-toggle .ot-status .dot.offline { background:var(--text-light); }
+    .online-toggle .ot-status span { font-weight:700; font-size:14px; }
+    .earnings-bar { position:absolute; top:90px; left:20px; right:20px; background:rgba(255,255,255,.95); border-radius:14px; padding:10px 16px; box-shadow:var(--shadow-lg); z-index:20; display:flex; align-items:center; justify-content:space-between; }
+    .earnings-bar .eb-amount { font-size:22px; font-weight:900; color:var(--primary); }
+    .earnings-bar .eb-label { font-size:11px; color:var(--text-secondary); }
+
+    /* Heatmap Legend */
+    .heatmap-legend-float { position:absolute; bottom:200px; left:20px; background:rgba(255,255,255,.95); border-radius:10px; padding:8px 12px; z-index:20; font-size:10px; display:flex; align-items:center; gap:6px; }
+    .heatmap-legend-float .gradient { width:60px; height:8px; border-radius:4px; background:linear-gradient(90deg, #D1FAE5, #FDE68A, #FCA5A5, #7C3AED, #EC4899); }
+
+    /* Surge Zones */
+    .surge-zone { position:absolute; top:148px; left:20px; background:linear-gradient(135deg, var(--primary), #EC4899); color:#fff; border-radius:12px; padding:8px 14px; z-index:20; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; animation:pulse-surge 2s infinite; }
+
+    /* Bottom panel */
+    .driver-panel { position:absolute; bottom:0; left:0; right:0; background:var(--surface); border-radius:24px 24px 0 0; padding:16px 20px 28px; z-index:20; box-shadow:0 -4px 20px rgba(0,0,0,.15); }
+    .driver-panel .handle { width:40px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 12px; }
+    .directed-trip { display:flex; align-items:center; gap:12px; padding:12px; background:var(--primary-50); border-radius:12px; margin-bottom:12px; cursor:pointer; }
+    .directed-trip i { font-size:20px; color:var(--primary); }
+    .directed-trip .dt-info { flex:1; }
+    .directed-trip .dt-info h5 { font-size:13px; font-weight:700; }
+    .directed-trip .dt-info p { font-size:11px; color:var(--text-secondary); }
+    .directed-trip .dt-count { font-size:11px; color:var(--primary); font-weight:700; }
+
+    /* Ride Request Card */
+    .ride-request { position:absolute; bottom:0; left:0; right:0; background:var(--surface); border-radius:24px 24px 0 0; padding:20px 20px 28px; z-index:30; box-shadow:0 -8px 30px rgba(0,0,0,.2); animation:slideUp .3s ease; }
+    @keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+    .ride-request .rr-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .ride-request .rr-header h4 { font-size:16px; font-weight:800; }
+    .ride-request .rr-header .rr-time { font-size:24px; font-weight:900; color:var(--primary); }
+    .rr-route { display:flex; gap:10px; align-items:flex-start; margin-bottom:16px; }
+    .rr-route .rr-dots { display:flex; flex-direction:column; align-items:center; gap:4px; padding-top:4px; }
+    .rr-route .rr-dots .d-green { width:8px; height:8px; border-radius:50%; background:var(--success); }
+    .rr-route .rr-dots .d-red { width:8px; height:8px; border-radius:50%; background:var(--danger); }
+    .rr-route .rr-dots .d-line { width:2px; height:16px; background:var(--border); }
+    .rr-route .rr-places { flex:1; }
+    .rr-route .rr-places div { font-size:13px; margin-bottom:8px; }
+    .rr-details { display:flex; gap:12px; margin-bottom:16px; }
+    .rr-detail { flex:1; background:var(--primary-50); border-radius:10px; padding:8px 12px; text-align:center; }
+    .rr-detail .rr-d-label { font-size:10px; color:var(--text-secondary); }
+    .rr-detail .rr-d-value { font-size:14px; font-weight:700; }
+    .rr-rider { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+    .rr-rider .rr-avatar { width:36px; height:36px; border-radius:50%; background:var(--primary-100); display:flex; align-items:center; justify-content:center; font-size:16px; }
+    .rr-rider .rr-r-info { flex:1; }
+    .rr-rider .rr-r-info .rr-r-name { font-weight:700; font-size:14px; }
+    .rr-rider .rr-r-info .rr-r-meta { font-size:11px; color:var(--text-secondary); }
+    .rr-rider .rr-r-badge { display:flex; align-items:center; gap:4px; font-size:12px; color:var(--accent); font-weight:700; }
+    .rr-actions { display:flex; gap:10px; }
+    .rr-actions .btn { flex:1; }
+    .rr-accept { background:var(--primary); color:#fff; padding:14px; border-radius:var(--radius-full); font-weight:700; font-size:16px; text-align:center; cursor:pointer; flex:2; }
+    .rr-accept:hover { background:var(--primary-dark); }
+    .rr-decline { background:var(--primary-100); color:var(--primary); padding:14px; border-radius:var(--radius-full); font-weight:700; font-size:16px; text-align:center; cursor:pointer; flex:1; }
+
+    /* Active Ride */
+    .active-ride { position:absolute; top:0; left:0; right:0; bottom:0; background:var(--bg); z-index:40; }
+    #active-ride-map { width:100%; height:55%; }
+    .active-ride-panel { position:absolute; bottom:0; left:0; right:0; background:var(--surface); border-radius:24px 24px 0 0; padding:20px 20px 28px; z-index:10; }
+    .ar-nav-card { background:#1F2937; color:#fff; border-radius:14px; padding:12px 16px; margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+    .ar-nav-card .ar-address { flex:1; font-size:13px; }
+    .ar-nav-card .ar-eta { font-size:12px; opacity:.7; }
+    .ar-nav-card .ar-btn { background:var(--primary); color:#fff; padding:6px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; }
+    .ar-rider { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .ar-rider .ar-r-avatar { width:40px; height:40px; border-radius:50%; background:var(--primary-100); display:flex; align-items:center; justify-content:center; font-size:18px; }
+    .ar-rider .ar-r-info { flex:1; }
+    .ar-rider .ar-r-info .ar-r-name { font-weight:700; font-size:15px; }
+    .ar-rider .ar-r-info .ar-r-meta { font-size:11px; color:var(--text-secondary); }
+    .ar-rider .ar-r-actions { display:flex; gap:6px; }
+    .ar-rider .ar-r-actions button { width:36px; height:36px; border-radius:50%; border:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--primary); cursor:pointer; }
+    .ar-progress { display:flex; gap:8px; margin-bottom:14px; }
+    .ar-step { flex:1; text-align:center; padding:8px; border-radius:10px; border:1px solid var(--border); }
+    .ar-step.active { border-color:var(--primary); background:var(--primary-50); }
+    .ar-step .ar-s-icon { font-size:18px; margin-bottom:4px; }
+    .ar-step .ar-s-label { font-size:10px; color:var(--text-secondary); }
+
+    /* Earnings Screen */
+    .earnings-screen { padding:36px 20px 20px; }
+    .earnings-hero { background:linear-gradient(135deg, var(--primary), #6D28D9); border-radius:20px; padding:24px; color:#fff; text-align:center; margin-bottom:20px; }
+    .earnings-hero .eh-label { font-size:12px; opacity:.7; }
+    .earnings-hero .eh-amount { font-size:36px; font-weight:900; margin:4px 0; }
+    .earnings-hero .eh-detail { font-size:12px; opacity:.7; }
+    .earnings-breakdown { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+    .eb-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center; }
+    .eb-card .eb-c-label { font-size:11px; color:var(--text-secondary); }
+    .eb-card .eb-c-value { font-size:18px; font-weight:800; margin-top:2px; }
+    .withdraw-btn { width:100%; padding:14px; background:var(--primary); color:#fff; border-radius:var(--radius-full); font-weight:700; font-size:15px; cursor:pointer; margin-bottom:20px; }
+
+    /* Incentives Screen */
+    .incentives-screen { padding:36px 20px 20px; }
+    .incentive-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:12px; }
+    .incentive-card .ic-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .incentive-card .ic-header h5 { font-size:14px; font-weight:700; }
+    .incentive-card .ic-bonus { font-size:18px; font-weight:900; color:var(--primary); }
+    .incentive-card .ic-progress { height:8px; background:var(--primary-100); border-radius:4px; overflow:hidden; margin-bottom:6px; }
+    .incentive-card .ic-progress-fill { height:100%; background:var(--primary); border-radius:4px; transition:width .5s ease; }
+    .incentive-card .ic-detail { display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); }
+    .incentive-card.completed { border-color:var(--success); }
+    .incentive-card.completed .ic-progress-fill { background:var(--success); }
+
+    /* Safety Screen */
+    .driver-safety-screen { padding:36px 20px 20px; }
+    .sos-driver { width:100%; padding:24px; background:linear-gradient(135deg, #EF4444, #B91C1C); border-radius:20px; color:#fff; text-align:center; margin-bottom:20px; cursor:pointer; }
+    .sos-driver .sos-icon { font-size:40px; margin-bottom:6px; }
+    .sos-driver h4 { font-size:18px; font-weight:800; }
+    .sos-driver p { font-size:11px; opacity:.8; }
+    .safety-feature { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); }
+    .safety-feature i { font-size:22px; color:var(--primary); width:32px; text-align:center; }
+    .safety-feature .sf-info { flex:1; }
+    .safety-feature .sf-info h5 { font-size:14px; font-weight:700; }
+    .safety-feature .sf-info p { font-size:11px; color:var(--text-secondary); }
+
+    /* Profile Screen */
+    .profile-screen { padding:36px 20px 20px; }
+    .profile-header { text-align:center; margin-bottom:20px; }
+    .profile-header .ph-avatar { width:72px; height:72px; border-radius:50%; background:var(--primary-100); display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto 10px; }
+    .profile-header h3 { font-size:18px; font-weight:800; }
+    .profile-header .ph-plate { font-size:13px; color:var(--text-secondary); }
+    .metric-row { display:flex; gap:10px; margin-bottom:16px; }
+    .metric-box { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center; }
+    .metric-box .mb-value { font-size:20px; font-weight:800; color:var(--primary); }
+    .metric-box .mb-label { font-size:10px; color:var(--text-secondary); text-transform:uppercase; }
+    .doc-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+    .doc-item .doc-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+    .doc-item .doc-icon.approved { background:#D1FAE5; color:var(--success); }
+    .doc-item .doc-icon.pending { background:#FEF3C7; color:var(--warning); }
+    .doc-item .doc-info { flex:1; }
+    .doc-item .doc-info h5 { font-size:13px; font-weight:600; }
+    .doc-item .doc-info p { font-size:11px; color:var(--text-light); }
+
+    /* Bottom Nav */
+    .driver-nav { position:absolute; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; justify-content:space-around; padding:6px 0 26px; z-index:25; }
+    .driver-nav .dn-tab { display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; color:var(--text-light); cursor:pointer; padding:4px 8px; }
+    .driver-nav .dn-tab.active { color:var(--primary); }
+    .driver-nav .dn-tab i { font-size:20px; }
+
+    @media(max-width:440px) {
+      .app-container { padding:0; background:var(--bg); }
+      .phone-frame { width:100%; height:100vh; border-radius:0; border:none; }
+      .phone-frame::before { display:none; }
+    }
+  </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <div class="phone-frame">
+      <!-- ========== SCREEN 1: MAP / HOME ========== -->
+      <div class="screen active" id="screen-map">
+        <div id="driver-map"></div>
+        
+        <div class="online-toggle">
+          <div class="ot-status">
+            <div class="dot" id="online-dot"></div>
+            <span id="online-text">En línea</span>
+          </div>
+          <div class="toggle active" id="online-toggle" onclick="toggleOnline()"></div>
+        </div>
+
+        <div class="earnings-bar">
+          <div>
+            <div class="eb-label">Ganancias hoy</div>
+            <div class="eb-amount" id="today-earnings">$847.50</div>
+          </div>
+          <button class="btn btn-sm btn-secondary" onclick="showScreen('screen-earnings')">Ver todo</button>
+        </div>
+
+        <div class="surge-zone" id="surge-indicator">
+          <i class="fas fa-bolt"></i> Polanco ×2.5
+        </div>
+
+        <div class="heatmap-legend-float">
+          <span>Baja</span>
+          <div class="gradient"></div>
+          <span>Alta</span>
+        </div>
+
+        <div class="driver-panel">
+          <div class="handle"></div>
+          <div class="directed-trip" onclick="setupDirectedTrip()">
+            <i class="fas fa-map-pin"></i>
+            <div class="dt-info">
+              <h5>Viaje Direccionado</h5>
+              <p>Configura tu destino (3 veces al día)</p>
+            </div>
+            <span class="dt-count">3/3</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary" style="flex:1;" onclick="showScreen('screen-earnings')"><i class="fas fa-wallet"></i> Billetera</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="showScreen('screen-incentives')"><i class="fas fa-gift"></i> Bonos</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="showScreen('screen-safety')"><i class="fas fa-shield-alt"></i></button>
+          </div>
+        </div>
+
+        <div class="driver-nav">
+          <div class="dn-tab active"><i class="fas fa-map"></i><span>Mapa</span></div>
+          <div class="dn-tab" onclick="showScreen('screen-earnings')"><i class="fas fa-wallet"></i><span>Ganancias</span></div>
+          <div class="dn-tab" onclick="showScreen('screen-incentives')"><i class="fas fa-bullseye"></i><span>Metas</span></div>
+          <div class="dn-tab" onclick="showScreen('screen-safety')"><i class="fas fa-shield-alt"></i><span>Seguridad</span></div>
+          <div class="dn-tab" onclick="showScreen('screen-profile')"><i class="fas fa-user"></i><span>Perfil</span></div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 2: RIDE REQUEST ========== -->
+      <div class="screen hidden-right" id="screen-request">
+        <div class="sbar sbar-light" style="background:var(--primary);">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div style="background:var(--primary); padding:4px 20px 16px; color:#fff;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:11px; opacity:.7;">NUEVO VIAJE</span>
+            <span style="margin-left:auto; font-size:20px; font-weight:900;" id="request-timer">15s</span>
+          </div>
+        </div>
+        <div style="padding:20px;">
+          <div class="rr-route" style="margin-bottom:16px;">
+            <div class="rr-dots">
+              <div class="d-green"></div>
+              <div class="d-line"></div>
+              <div class="d-red"></div>
+            </div>
+            <div class="rr-places">
+              <div style="font-weight:600;">Av. Presidente Masaryk 123, Polanco</div>
+              <div style="font-weight:600;">Av. Michoacán 45, Condesa</div>
+            </div>
+          </div>
+          <div class="rr-details">
+            <div class="rr-detail">
+              <div class="rr-d-label">Distancia</div>
+              <div class="rr-d-value">5.2 km</div>
+            </div>
+            <div class="rr-detail">
+              <div class="rr-d-label">ETA recogida</div>
+              <div class="rr-d-value">3 min</div>
+            </div>
+            <div class="rr-detail">
+              <div class="rr-d-label">Tiempo viaje</div>
+              <div class="rr-d-value">12 min</div>
+            </div>
+          </div>
+          <div class="rr-rider">
+            <div class="rr-avatar">👩</div>
+            <div class="rr-r-info">
+              <div class="rr-r-name">María García</div>
+              <div class="rr-r-meta">156 viajes · Cuenta verificada ✓</div>
+            </div>
+            <div class="rr-r-badge">4.8 ★</div>
+          </div>
+          <div style="background:var(--primary-50); border-radius:12px; padding:12px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:13px; font-weight:600;">Ganancia estimada</span>
+            <span style="font-size:22px; font-weight:900; color:var(--primary);">$92.00</span>
+          </div>
+          <div id="surge-request" style="display:flex; align-items:center; gap:6px; margin-bottom:12px;">
+            <span class="surge-indicator"><i class="fas fa-bolt"></i> ×1.5 Tarifa dinámica</span>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+            <i class="fas fa-credit-card" style="color:var(--primary);"></i>
+            <span style="font-size:13px; color:var(--text-secondary);">Pago con tarjeta Visa</span>
+          </div>
+          <div class="rr-actions">
+            <div class="rr-decline" onclick="declineRide()">Declinar</div>
+            <div class="rr-accept" onclick="acceptRide()">Aceptar viaje</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 3: ACTIVE RIDE ========== -->
+      <div class="screen hidden-right" id="screen-active-ride">
+        <div class="active-ride">
+          <div id="active-ride-map"></div>
+          <div class="active-ride-panel">
+            <div class="ar-nav-card">
+              <div>
+                <div class="ar-address">182 Pitt St, Sydney NSW 2000</div>
+                <div class="ar-eta">2 min · 12 km</div>
+              </div>
+              <div class="ar-btn" onclick="openNavigation()">NAVEGAR</div>
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;"><i class="fas fa-info-circle" style="color:var(--primary);"></i> Recoger pasajero. Si llegas después de 12:45, contacta al rider.</div>
+            <div class="ar-rider">
+              <div class="ar-r-avatar">👩</div>
+              <div class="ar-r-info">
+                <div class="ar-r-name">María García</div>
+                <div class="ar-r-meta">4.8 ★ · Frecuente</div>
+              </div>
+              <div class="ar-r-actions">
+                <button onclick="callRider()"><i class="fas fa-phone"></i></button>
+                <button onclick="chatRider()"><i class="fas fa-comment"></i></button>
+              </div>
+            </div>
+            <div class="ar-progress">
+              <div class="ar-step active">
+                <div class="ar-s-icon">📍</div>
+                <div class="ar-s-label">Recogida</div>
+              </div>
+              <div class="ar-step">
+                <div class="ar-s-icon">🚗</div>
+                <div class="ar-s-label">En camino</div>
+              </div>
+              <div class="ar-step">
+                <div class="ar-s-icon">🏁</div>
+                <div class="ar-s-label">Destino</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-primary btn-block" onclick="arrivedAtPickup()">Llegué a recogida</button>
+              <div class="sos-btn" style="width:44px; height:44px; font-size:14px; flex-shrink:0;" onclick="triggerDriverSOS()"><i class="fas fa-exclamation"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN: CASH CONFIRM ========== -->
+      <div class="screen hidden-right" id="screen-cash">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div style="padding:36px 20px; text-align:center;">
+          <div style="font-size:48px; margin-bottom:12px;">💵</div>
+          <h3 style="font-size:20px; font-weight:800; margin-bottom:8px;">Cobrar en efectivo</h3>
+          <p style="color:var(--text-secondary); font-size:13px; margin-bottom:20px;">El pasajero pagará en efectivo</p>
+          <div style="background:var(--primary-50); border-radius:16px; padding:24px; margin-bottom:20px;">
+            <div style="font-size:36px; font-weight:900; color:var(--primary);">$92.00</div>
+            <div style="font-size:12px; color:var(--text-secondary);">Monto a cobrar</div>
+          </div>
+          <button class="btn btn-primary btn-block btn-lg" onclick="confirmCashPayment()">Confirmar cobro · $92.00</button>
+          <button class="btn btn-ghost btn-block mt-3" onclick="showScreen('screen-map', 'left')">Reportar problema</button>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 4: EARNINGS ========== -->
+      <div class="screen hidden-right" id="screen-earnings">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="earnings-screen">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-map', 'left')"></i>
+            <h3 style="font-size:20px; font-weight:800; flex:1;">Mis Ganancias</h3>
+          </div>
+          <div class="earnings-hero">
+            <div class="eh-label">Ganancias totales hoy</div>
+            <div class="eh-amount">$847.50</div>
+            <div class="eh-detail">12 viajes completados · $70.63 promedio</div>
+          </div>
+          <div class="earnings-breakdown">
+            <div class="eb-card">
+              <div class="eb-c-label">Viajes hoy</div>
+              <div class="eb-c-value">12</div>
+            </div>
+            <div class="eb-card">
+              <div class="eb-c-label">Horas en línea</div>
+              <div class="eb-c-value">6.5h</div>
+            </div>
+            <div class="eb-card">
+              <div class="eb-c-label">Propinas</div>
+              <div class="eb-c-value" style="color:var(--success);">$125</div>
+            </div>
+            <div class="eb-card">
+              <div class="eb-c-label">Bonos</div>
+              <div class="eb-c-value" style="color:var(--primary);">$200</div>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span style="font-size:14px; font-weight:700;">Esta semana</span>
+            <span style="font-size:18px; font-weight:900; color:var(--primary);">$4,230.00</span>
+          </div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+              <span>Tasa de servicio</span>
+              <span style="font-weight:600;">15%</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+              <span>Comisión retenida</span>
+              <span style="font-weight:600; color:var(--danger);">-$634.50</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
+              <span>Disponible para retiro</span>
+              <span style="font-weight:700; color:var(--success);">$3,595.50</span>
+            </div>
+          </div>
+          <div class="withdraw-btn" onclick="withdrawFunds()"><i class="fas fa-university"></i> Retirar fondos</div>
+          <div style="font-size:11px; color:var(--text-light); text-align:center;">Próxima dispersión automática: Martes 10:00 AM</div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 5: INCENTIVES ========== -->
+      <div class="screen hidden-right" id="screen-incentives">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="incentives-screen">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-map', 'left')"></i>
+            <h3 style="font-size:20px; font-weight:800; flex:1;">Bonos e Incentivos</h3>
+          </div>
+          <div class="incentive-card">
+            <div class="ic-header">
+              <h5>🔥 Completa 20 viajes hoy</h5>
+              <span class="ic-bonus">+$500</span>
+            </div>
+            <div class="ic-progress"><div class="ic-progress-fill" style="width:70%;"></div></div>
+            <div class="ic-detail"><span>14 de 20 viajes</span><span>Hasta 23:59</span></div>
+          </div>
+          <div class="incentive-card">
+            <div class="ic-header">
+              <h5>🌙 Horario nocturno</h5>
+              <span class="ic-bonus">+$300</span>
+            </div>
+            <div class="ic-progress"><div class="ic-progress-fill" style="width:30%;"></div></div>
+            <div class="ic-detail"><span>3 de 10 viajes</span><span>Hasta 6:00 AM</span></div>
+          </div>
+          <div class="incentive-card completed">
+            <div class="ic-header">
+              <h5>📍 Zona Polanco</h5>
+              <span class="ic-bonus" style="color:var(--success);">+$200 ✓</span>
+            </div>
+            <div class="ic-progress"><div class="ic-progress-fill" style="width:100%;"></div></div>
+            <div class="ic-detail"><span>5 de 5 viajes</span><span>Completado</span></div>
+          </div>
+          <div class="incentive-card">
+            <div class="ic-header">
+              <h5>🏆 Conductor de la semana</h5>
+              <span class="ic-bonus">+$1,500</span>
+            </div>
+            <div class="ic-progress"><div class="ic-progress-fill" style="width:65%;"></div></div>
+            <div class="ic-detail"><span>52 de 80 viajes</span><span>Hasta domingo</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 6: SAFETY ========== -->
+      <div class="screen hidden-right" id="screen-safety">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="driver-safety-screen">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+            <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-map', 'left')"></i>
+            <h3 style="font-size:20px; font-weight:800;">Seguridad</h3>
+          </div>
+          <div class="sos-driver" onclick="triggerDriverSOS()">
+            <div class="sos-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <h4>BOTÓN SOS</h4>
+            <p>Autoridades + Equipo de respuesta Movilidad</p>
+          </div>
+          <div class="safety-feature">
+            <i class="fas fa-phone-slash"></i>
+            <div class="sf-info">
+              <h5>Llamadas Enmascaradas</h5>
+              <p>Tu número real está oculto. Las llamadas se redirigen por Twilio.</p>
+            </div>
+          </div>
+          <div class="safety-feature">
+            <i class="fas fa-map-marker-alt"></i>
+            <div class="sf-info">
+              <h5>Monitoreo GPS en Tiempo Real</h5>
+              <p>La plataforma rastrea tu ubicación durante todo el viaje.</p>
+            </div>
+          </div>
+          <div class="safety-feature">
+            <i class="fas fa-user-check"></i>
+            <div class="sf-info">
+              <h5>Info del Pasajero</h5>
+              <p>Consulta calificación, viajes y verificación antes de abordar.</p>
+            </div>
+          </div>
+          <div class="safety-feature">
+            <i class="fas fa-ban"></i>
+            <div class="sf-info">
+              <h5>Tarifa de Cancelación</h5>
+              <p>Si el pasajero no se presenta en 3 min, cobras penalización.</p>
+            </div>
+          </div>
+          <div class="safety-feature">
+            <i class="fas fa-route"></i>
+            <div class="sf-info">
+              <h5>TripCheck</h5>
+              <p>El sistema monitorea desvíos de ruta y alerta ante anomalías.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== SCREEN 7: PROFILE ========== -->
+      <div class="screen hidden-right" id="screen-profile">
+        <div class="sbar">
+          <span>9:41</span>
+          <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+        </div>
+        <div class="profile-screen">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-map', 'left')"></i>
+            <h3 style="font-size:20px; font-weight:800; flex:1;">Mi Perfil</h3>
+          </div>
+          <div class="profile-header">
+            <div class="ph-avatar">👨</div>
+            <h3>Roberto Martínez</h3>
+            <div class="ph-plate">Nissan Versa Blanco · M-456 ABC</div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-box">
+              <div class="mb-value">4.7</div>
+              <div class="mb-label">Calificación</div>
+            </div>
+            <div class="metric-box">
+              <div class="mb-value">89%</div>
+              <div class="mb-label">Aceptación</div>
+            </div>
+            <div class="metric-box">
+              <div class="mb-value">5%</div>
+              <div class="mb-label">Cancelación</div>
+            </div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-box">
+              <div class="mb-value">1,245</div>
+              <div class="mb-label">Viajes totales</div>
+            </div>
+            <div class="metric-box">
+              <div class="mb-value">320h</div>
+              <div class="mb-label">Horas en línea</div>
+            </div>
+          </div>
+          <h4 style="font-size:14px; font-weight:700; margin:16px 0 8px;">Documentos</h4>
+          <div class="doc-item">
+            <div class="doc-icon approved"><i class="fas fa-check"></i></div>
+            <div class="doc-info"><h5>Licencia de conducir</h5><p>Aprobada · Expira 12/2025</p></div>
+          </div>
+          <div class="doc-item">
+            <div class="doc-icon approved"><i class="fas fa-check"></i></div>
+            <div class="doc-info"><h5>Antecedentes penales</h5><p>Aprobada · Verificado 01/2024</p></div>
+          </div>
+          <div class="doc-item">
+            <div class="doc-icon approved"><i class="fas fa-check"></i></div>
+            <div class="doc-info"><h5>Tarjeta de circulación</h5><p>Aprobada · Vigente</p></div>
+          </div>
+          <div class="doc-item">
+            <div class="doc-icon pending"><i class="fas fa-clock"></i></div>
+            <div class="doc-info"><h5>Póliza de seguro</h5><p>Renovación pendiente</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    let currentScreen = 'screen-map';
+    const screenHistory = ['screen-map'];
+    let isOnline = true;
+    let driverMap = null;
+
+    function showScreen(id, direction = 'right') {
+      const current = document.getElementById(currentScreen);
+      const next = document.getElementById(id);
+      if (!next || currentScreen === id) return;
+      current.className = direction === 'right' ? 'screen hidden-left' : 'screen hidden-right';
+      next.className = 'screen active';
+      if (direction === 'right') screenHistory.push(id);
+      currentScreen = id;
+      if (id === 'screen-map') setTimeout(initDriverMap, 100);
+      if (id === 'screen-active-ride') setTimeout(initActiveRideMap, 100);
+    }
+
+    function toggleOnline() {
+      isOnline = !isOnline;
+      document.getElementById('online-toggle').classList.toggle('active', isOnline);
+      document.getElementById('online-dot').classList.toggle('offline', !isOnline);
+      document.getElementById('online-text').textContent = isOnline ? 'En línea' : 'Fuera de línea';
+      if (isOnline) simulateRideRequest();
+    }
+
+    function initDriverMap() {
+      if (driverMap) { driverMap.invalidateSize(); return; }
+      driverMap = L.map('driver-map', { zoomControl: false }).setView([19.4326, -99.1332], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OSM'
+      }).addTo(driverMap);
+
+      // Simulate surge zones as colored circles
+      const zones = MockData.surgeZones();
+      zones.forEach(z => {
+        L.circle([z.lat, z.lng], {
+          radius: 1500, color: z.color, fillColor: z.color,
+          fillOpacity: 0.3, weight: 2
+        }).addTo(driverMap).bindPopup(`<b>${z.name}</b><br>Multiplicador: ×${z.multiplier}<br>Solicitudes: ${z.requests}<br>Conductores: ${z.drivers}`);
+      });
+
+      // Show some driver markers
+      const drivers = MockData.randomLocations(8);
+      drivers.forEach(d => {
+        L.marker([d.lat, d.lng], {
+          icon: L.divIcon({
+            className: '', html: `<div style="background:var(--primary);width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);"></div>`,
+            iconSize: [16, 16], iconAnchor: [8, 8]
+          })
+        }).addTo(driverMap);
+      });
+
+      if (isOnline) setTimeout(simulateRideRequest, 3000);
+    }
+
+    function simulateRideRequest() {
+      // Simulate incoming ride request after delay
+      let timer = 15;
+      document.getElementById('request-timer').textContent = timer + 's';
+      const countdown = setInterval(() => {
+        timer--;
+        document.getElementById('request-timer').textContent = timer + 's';
+        if (timer <= 0) { clearInterval(countdown); showScreen('screen-map', 'left'); }
+      }, 1000);
+      showScreen('screen-request');
+      // Store interval to clear on accept/decline
+      window._requestCountdown = countdown;
+    }
+
+    function acceptRide() {
+      clearInterval(window._requestCountdown);
+      console.log('[Movilidad] Ride accepted');
+      showScreen('screen-active-ride');
+    }
+
+    function declineRide() {
+      clearInterval(window._requestCountdown);
+      console.log('[Movilidad] Ride declined');
+      showScreen('screen-map', 'left');
+    }
+
+    let activeRideMap = null;
+    function initActiveRideMap() {
+      if (activeRideMap) { activeRideMap.invalidateSize(); return; }
+      activeRideMap = L.map('active-ride-map', { zoomControl: false }).setView([19.4326, -99.1332], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OSM'
+      }).addTo(activeRideMap);
+      const pickup = [19.4326, -99.1332];
+      const dest = [19.4350, -99.1500];
+      L.marker(pickup, {
+        icon: L.divIcon({ className: '', html: '<div style="background:var(--success);width:14px;height:14px;border-radius:50%;border:2px solid #fff;"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
+      }).addTo(activeRideMap);
+      L.marker(dest, {
+        icon: L.divIcon({ className: '', html: '<div style="background:var(--danger);width:14px;height:14px;border-radius:50%;border:2px solid #fff;"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
+      }).addTo(activeRideMap);
+      L.polyline([pickup, dest], { color: '#7C3AED', weight: 4 }).addTo(activeRideMap);
+      activeRideMap.fitBounds([pickup, dest], { padding: [40, 40] });
+    }
+
+    function arrivedAtPickup() {
+      if (confirm('¿Confirmas que llegaste al punto de recogida?')) {
+        alert('✅ Notificación enviada al pasajero.\nEsperando que aborde...');
+        // Simulate ride in progress then completion
+        setTimeout(() => {
+          // Check if cash payment
+          showScreen('screen-cash'); // or go to rating directly for card payments
+        }, 2000);
+      }
+    }
+
+    function confirmCashPayment() {
+      console.log('[Movilidad] Cash payment confirmed: $92.00');
+      alert('✅ Cobro confirmado: $92.00\n\nViaje completado exitosamente.');
+      showScreen('screen-map', 'left');
+    }
+
+    function openNavigation() {
+      // Open external navigation (Google Maps / Waze)
+      const url = 'https://www.google.com/maps/dir/?api=1&destination=19.4326,-99.1332';
+      window.open(url, '_blank');
+    }
+
+    function callRider() {
+      alert('📞 Llamada enmascarada iniciada\nTu número real está protegido por Twilio');
+    }
+
+    function chatRider() {
+      alert('💬 Chat enmascarado abierto');
+    }
+
+    function setupDirectedTrip() {
+      const dest = prompt('Ingresa tu destino direccionado:');
+      if (dest) alert('✅ Viaje direccionado configurado: ' + dest + '\nSolo recibirás pasajeros en esa dirección.');
+    }
+
+    function withdrawFunds() {
+      const amount = prompt('Monto a retirar:', '3595.50');
+      if (amount) alert(`✅ Retiro de $${amount} solicitado\n\nSe transferirá a tu cuenta bancaria registrada en 1-2 días hábiles.`);
+    }
+
+    function triggerDriverSOS() {
+      if (confirm('🚨 ¿Activar alerta de emergencia?')) {
+        alert('🚨 SOS Activado\n\n• Autoridades locales notificadas\n• Ubicación GPS enviada\n• Equipo de seguridad Movilidad alertado\n• Audio del vehículo activado');
+      }
+    }
+
+    // Init map on load
+    setTimeout(initDriverMap, 500);
+  </script>
+</body>
+</html>

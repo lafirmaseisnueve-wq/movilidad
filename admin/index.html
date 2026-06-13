@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movilidad Admin - By TheFirm69 Systems</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .admin-wrap { display:flex; min-height:100vh; }
+    .admin-sidebar { width:260px; min-height:100vh; background:var(--primary-900); color:#fff; padding:0; position:fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column; overflow-y:auto; }
+    .admin-sidebar .logo { padding:20px; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:8px; }
+    .admin-sidebar .logo h2 { font-size:20px; font-weight:800; display:flex; align-items:center; gap:8px; }
+    .admin-sidebar .logo h2 span { color:var(--accent); }
+    .admin-sidebar .logo .brand { font-size:9px; color:rgba(255,255,255,.35); margin-top:4px; letter-spacing:1.5px; text-transform:uppercase; }
+    .nav-section { padding:0 12px; margin-bottom:8px; }
+    .nav-section-title { font-size:9px; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,.3); padding:8px 8px 4px; font-weight:600; }
+    .nav-link { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; color:rgba(255,255,255,.6); font-size:12px; font-weight:500; transition:var(--transition); cursor:pointer; }
+    .nav-link:hover { background:rgba(255,255,255,.08); color:#fff; }
+    .nav-link.active { background:var(--primary); color:#fff; box-shadow:var(--shadow-purple); }
+    .nav-link i { width:18px; text-align:center; font-size:14px; }
+    .nav-link .badge-sm { margin-left:auto; background:var(--danger); color:#fff; padding:1px 6px; border-radius:8px; font-size:9px; font-weight:700; }
+    .admin-main { margin-left:260px; min-height:100vh; background:var(--bg); }
+    .admin-header { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 28px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50; }
+    .admin-header h1 { font-size:18px; font-weight:700; }
+    .admin-header .ah-right { display:flex; align-items:center; gap:16px; }
+    .admin-header .ah-right .notif-btn { position:relative; width:36px; height:36px; border-radius:50%; border:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    .admin-header .ah-right .notif-dot { position:absolute; top:6px; right:6px; width:8px; height:8px; border-radius:50%; background:var(--danger); }
+    .admin-content { padding:20px 28px; }
+    .page { display:none; }
+    .page.active { display:block; }
+    #admin-map { width:100%; height:500px; border-radius:var(--radius); z-index:1; }
+    .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+    .stat-card { background:var(--surface); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); border:1px solid var(--border); }
+    .stat-card .sc-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; margin-bottom:8px; }
+    .stat-card .sc-label { font-size:11px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
+    .stat-card .sc-value { font-size:24px; font-weight:800; margin:2px 0; }
+    .stat-card .sc-change { font-size:11px; font-weight:600; }
+    .chart-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+    .chart-box { background:var(--surface); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); border:1px solid var(--border); }
+    .chart-box h3 { font-size:13px; font-weight:700; margin-bottom:12px; }
+    .alert-list { display:flex; flex-direction:column; gap:10px; }
+    .alert-item { background:var(--surface); border-radius:var(--radius); padding:14px; border-left:4px solid; box-shadow:var(--shadow); display:flex; align-items:flex-start; gap:12px; }
+    .alert-item.critical { border-color:var(--danger); animation:alert-pulse 1.5s infinite; }
+    .alert-item.warning { border-color:var(--warning); }
+    .alert-item.info { border-color:var(--info); }
+    .alert-item .ai-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+    .alert-item .ai-body { flex:1; }
+    .alert-item .ai-body h4 { font-size:13px; font-weight:700; }
+    .alert-item .ai-body p { font-size:11px; color:var(--text-secondary); margin-top:2px; }
+    .alert-item .ai-body .ai-meta { display:flex; gap:12px; margin-top:6px; font-size:10px; color:var(--text-light); }
+    .alert-item .ai-actions { display:flex; gap:6px; }
+    .sos-panel { background:linear-gradient(135deg, #EF4444, #B91C1C); border-radius:var(--radius-lg); padding:24px; color:#fff; margin-bottom:20px; }
+    .sos-panel h3 { font-size:18px; font-weight:800; margin-bottom:4px; }
+    .sos-panel .sos-details { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:12px; }
+    .sos-panel .sos-detail { background:rgba(255,255,255,.15); border-radius:10px; padding:10px; }
+    .sos-panel .sos-detail .sd-label { font-size:10px; opacity:.7; }
+    .sos-panel .sos-detail .sd-value { font-size:14px; font-weight:700; }
+    .user-table-wrap { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--border); overflow:hidden; }
+    .user-table-wrap .ut-header { padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+    .user-table-wrap .ut-header h3 { font-size:14px; font-weight:700; flex:1; }
+    .surge-zone-card { background:var(--surface); border-radius:var(--radius); padding:14px; border:1px solid var(--border); display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .surge-zone-card .szc-color { width:12px; height:12px; border-radius:4px; }
+    .surge-zone-card .szc-info { flex:1; }
+    .surge-zone-card .szc-info h4 { font-size:13px; font-weight:700; }
+    .surge-zone-card .szc-info p { font-size:11px; color:var(--text-secondary); }
+    .surge-zone-card .szc-mult { font-size:18px; font-weight:900; color:var(--primary); }
+    .geofence-item { background:var(--surface); border-radius:var(--radius); padding:14px; border:1px solid var(--border); margin-bottom:10px; display:flex; align-items:center; gap:12px; }
+    .geofence-item .gi-toggle { margin-left:auto; }
+    .ticket-card { background:var(--surface); border-radius:var(--radius); padding:14px; border:1px solid var(--border); margin-bottom:10px; }
+    .ticket-card .tc-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+    .ticket-card .tc-header h4 { font-size:13px; font-weight:700; }
+    @media(max-width:1024px) { .stat-grid { grid-template-columns:repeat(2,1fr); } .chart-row { grid-template-columns:1fr; } }
+    @media(max-width:768px) { .admin-sidebar { transform:translateX(-100%); } .admin-main { margin-left:0; } .stat-grid { grid-template-columns:1fr; } }
+  </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+<div class="admin-wrap">
+  <!-- SIDEBAR -->
+  <nav class="admin-sidebar">
+    <div class="logo">
+      <h2>🚗 Movili<span>dad</span></h2>
+      <div class="brand">By TheFirm69 Systems</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Principal</div>
+      <div class="nav-link active" onclick="showPage('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+      <div class="nav-link" onclick="showPage('livemap')"><i class="fas fa-satellite-dish"></i> Live Map GPS</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Gestión</div>
+      <div class="nav-link" onclick="showPage('users')"><i class="fas fa-users"></i> Usuarios CRM</div>
+      <div class="nav-link" onclick="showPage('fleets')"><i class="fas fa-car-side"></i> Flotillas</div>
+      <div class="nav-link" onclick="showPage('documents')"><i class="fas fa-file-alt"></i> Documentos <span class="badge-sm">3</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Finanzas</div>
+      <div class="nav-link" onclick="showPage('pricing')"><i class="fas fa-bolt"></i> Surge Pricing</div>
+      <div class="nav-link" onclick="showPage('commissions')"><i class="fas fa-percentage"></i> Comisiones</div>
+      <div class="nav-link" onclick="showPage('incentives-admin')"><i class="fas fa-gift"></i> Incentivos</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Seguridad</div>
+      <div class="nav-link" onclick="showPage('soc')"><i class="fas fa-shield-alt"></i> SOC <span class="badge-sm">2</span></div>
+      <div class="nav-link" onclick="showPage('tickets')"><i class="fas fa-headset"></i> Tickets Soporte</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Configuración</div>
+      <div class="nav-link" onclick="showPage('api-config')"><i class="fas fa-plug"></i> APIs y Servicios <span class="badge-sm">15</span></div>
+      <div class="nav-link" onclick="showPage('cities')"><i class="fas fa-globe"></i> Ciudades</div>
+      <div class="nav-link" onclick="showPage('analytics')"><i class="fas fa-chart-bar"></i> Analytics</div>
+    </div>
+    <div style="margin-top:auto; padding:12px 20px; border-top:1px solid rgba(255,255,255,.1);">
+      <div style="font-size:9px; color:rgba(255,255,255,.3); letter-spacing:1px;">THEFIRM69 SYSTEMS</div>
+      <div style="font-size:10px; color:rgba(255,255,255,.5); margin-top:2px;">v2.0.1 · Admin Panel</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="admin-main">
+    <header class="admin-header">
+      <h1 id="page-title">Dashboard</h1>
+      <div class="ah-right">
+        <div class="notif-btn" onclick="showPage('soc')"><i class="fas fa-bell"></i><div class="notif-dot"></div></div>
+        <div class="avatar" style="cursor:pointer;">👑</div>
+      </div>
+    </header>
+
+    <div class="admin-content">
+      <!-- ===== DASHBOARD ===== -->
+      <div class="page active" id="page-dashboard">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="sc-icon" style="background:var(--primary-100); color:var(--primary);"><i class="fas fa-car"></i></div>
+            <div class="sc-label">Conductores en línea</div>
+            <div class="sc-value">1,247</div>
+            <div class="sc-change" style="color:var(--success);"><i class="fas fa-arrow-up"></i> +12% vs ayer</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-icon" style="background:#DBEAFE; color:var(--info);"><i class="fas fa-route"></i></div>
+            <div class="sc-label">Viajes activos</div>
+            <div class="sc-value">3,891</div>
+            <div class="sc-change" style="color:var(--success);"><i class="fas fa-arrow-up"></i> +8% vs ayer</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-icon" style="background:#D1FAE5; color:var(--success);"><i class="fas fa-dollar-sign"></i></div>
+            <div class="sc-label">Ingresos hoy</div>
+            <div class="sc-value">$847K</div>
+            <div class="sc-change" style="color:var(--success);"><i class="fas fa-arrow-up"></i> +15%</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-icon" style="background:#FEE2E2; color:var(--danger);"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="sc-label">Alertas SOS</div>
+            <div class="sc-value">2</div>
+            <div class="sc-change" style="color:var(--danger);"><i class="fas fa-arrow-up"></i> +1</div>
+          </div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-box"><h3><i class="fas fa-chart-line" style="color:var(--primary);"></i> Viajes por hora</h3><canvas id="chart-rides" height="200"></canvas></div>
+          <div class="chart-box"><h3><i class="fas fa-users" style="color:var(--info);"></i> Conductores conectados</h3><canvas id="chart-drivers" height="200"></canvas></div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-box"><h3><i class="fas fa-dollar-sign" style="color:var(--success);"></i> Ingresos por hora</h3><canvas id="chart-revenue" height="200"></canvas></div>
+          <div class="chart-box"><h3><i class="fas fa-clock" style="color:var(--warning);"></i> Tiempo espera promedio</h3><canvas id="chart-wait" height="200"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ===== LIVE MAP ===== -->
+      <div class="page" id="page-livemap">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:8px;"><span class="live-dot"></span><span style="font-size:13px; font-weight:600;">Tiempo real</span></div>
+          <div class="heatmap-legend"><span style="font-size:11px;">Baja</span><div class="gradient" style="width:100px; height:10px; border-radius:5px; background:linear-gradient(90deg,#10B981,#F59E0B,#EF4444,#7C3AED);"></div><span style="font-size:11px;">Alta</span></div>
+        </div>
+        <div id="admin-map"></div>
+        <div class="stat-grid" style="margin-top:14px;">
+          <div class="stat-card"><div class="sc-label">Vehículos activos</div><div class="sc-value">1,247</div></div>
+          <div class="stat-card"><div class="sc-label">En viaje</div><div class="sc-value">891</div></div>
+          <div class="stat-card"><div class="sc-label">Disponibles</div><div class="sc-value">356</div></div>
+          <div class="stat-card"><div class="sc-label">SOS activos</div><div class="sc-value" style="color:var(--danger);">2</div></div>
+        </div>
+      </div>
+
+      <!-- ===== USERS CRM ===== -->
+      <div class="page" id="page-users">
+        <div style="display:flex; gap:8px; margin-bottom:14px;">
+          <button class="btn btn-primary btn-sm" onclick="showUserTab('drivers')">Conductores</button>
+          <button class="btn btn-secondary btn-sm" onclick="showUserTab('riders')">Pasajeros</button>
+          <button class="btn btn-secondary btn-sm" onclick="showUserTab('bans')">Baneos</button>
+        </div>
+        <div id="tab-drivers">
+          <div class="user-table-wrap">
+            <div class="ut-header"><h3>Conductores registrados</h3><input type="text" placeholder="Buscar..." style="padding:6px 12px; border:1px solid var(--border); border-radius:6px; font-size:12px;"></div>
+            <table class="data-table" id="drivers-table">
+              <thead><tr><th>ID</th><th>Nombre</th><th>Vehículo</th><th>Calificación</th><th>Viajes</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="drivers-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="tab-riders" style="display:none;">
+          <div class="user-table-wrap">
+            <div class="ut-header"><h3>Pasajeros registrados</h3></div>
+            <table class="data-table"><thead><tr><th>ID</th><th>Nombre</th><th>Teléfono</th><th>Calificación</th><th>Viajes</th><th>Verificado</th><th>Acciones</th></tr></thead>
+            <tbody id="riders-tbody"></tbody></table>
+          </div>
+        </div>
+        <div id="tab-bans" style="display:none;">
+          <h3 style="font-size:14px; font-weight:700; margin-bottom:12px;">Usuarios suspendidos</h3>
+          <div id="bans-list"></div>
+        </div>
+      </div>
+
+      <!-- ===== FLEETS ===== -->
+      <div class="page" id="page-fleets">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <h3 style="font-size:14px; font-weight:700;">Socios No Conductores (Dueños de Flotilla)</h3>
+          <button class="btn btn-primary btn-sm" onclick="addFleet()"><i class="fas fa-plus"></i> Nuevo Socio</button>
+        </div>
+        <div id="fleets-list"></div>
+      </div>
+
+      <!-- ===== DOCUMENTS ===== -->
+      <div class="page" id="page-documents">
+        <h3 style="font-size:14px; font-weight:700; margin-bottom:14px;">Documentos pendientes de aprobación</h3>
+        <div id="docs-list"></div>
+      </div>
+
+      <!-- ===== SURGE PRICING ===== -->
+      <div class="page" id="page-pricing">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <h3 style="font-size:14px; font-weight:700;">Configuración de Tarifa Dinámica</h3>
+          <span style="font-size:11px; color:var(--text-secondary);"><i class="fas fa-stream"></i> Procesado via Kafka Streams</span>
+        </div>
+        <div id="surge-zones-list"></div>
+        <div style="margin-top:20px;">
+          <h4 style="font-size:13px; font-weight:700; margin-bottom:10px;">Configurar nueva zona de surge</h4>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+            <div class="input-group"><label>Zona</label><input type="text" placeholder="Nombre de zona" id="new-surge-zone"></div>
+            <div class="input-group"><label>Multiplicador</label><input type="number" step="0.1" value="1.5" id="new-surge-mult"></div>
+            <div style="display:flex; align-items:flex-end;"><button class="btn btn-primary" onclick="addSurgeZone()">Agregar zona</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== COMMISSIONS ===== -->
+      <div class="page" id="page-commissions">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="sc-label">Comisión promedio</div><div class="sc-value">18%</div></div>
+          <div class="stat-card"><div class="sc-label">Retenido hoy</div><div class="sc-value">$152K</div></div>
+          <div class="stat-card"><div class="sc-label">Dispersado esta semana</div><div class="sc-value">$890K</div></div>
+          <div class="stat-card"><div class="sc-label">Pendiente dispersión</div><div class="sc-value">$234K</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+          <div class="input-group"><label>Comisión Express (%)</label><input type="number" value="18" id="comm-express"></div>
+          <div class="input-group"><label>Comisión Comfort (%)</label><input type="number" value="22" id="comm-comfort"></div>
+          <div class="input-group"><label>Comisión Taxi (%)</label><input type="number" value="10" id="comm-taxi"></div>
+          <div class="input-group"><label>Comisión Moto (%)</label><input type="number" value="15" id="comm-moto"></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveCommissions()">Guardar configuración</button>
+        <button class="btn btn-success" style="margin-left:8px;" onclick="dispersePayments()"><i class="fas fa-paper-plane"></i> Ejecutar dispersión bancaria</button>
+      </div>
+
+      <!-- ===== INCENTIVES ADMIN ===== -->
+      <div class="page" id="page-incentives-admin">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <h3 style="font-size:14px; font-weight:700;">Gestión de Incentivos y Promociones</h3>
+          <button class="btn btn-primary btn-sm" onclick="createIncentive()"><i class="fas fa-plus"></i> Nuevo incentivo</button>
+        </div>
+        <div id="admin-incentives-list"></div>
+        <h4 style="font-size:13px; font-weight:700; margin:20px 0 10px;">Códigos promocionales activos</h4>
+        <div id="admin-promos-list"></div>
+        <div style="margin-top:14px; display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
+          <div class="input-group"><label>Código</label><input type="text" placeholder="MOVILIDAD50" id="new-promo-code"></div>
+          <div class="input-group"><label>Descuento</label><input type="number" value="50" id="new-promo-disc"></div>
+          <div class="input-group"><label>Tipo</label><select id="new-promo-type"><option>Porcentaje</option><option>Monto fijo</option></select></div>
+          <div style="display:flex; align-items:flex-end;"><button class="btn btn-primary" onclick="createPromo()">Crear promo</button></div>
+        </div>
+      </div>
+
+      <!-- ===== SOC ===== -->
+      <div class="page" id="page-soc">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+          <span class="live-dot"></span>
+          <h3 style="font-size:14px; font-weight:700;">Centro de Operaciones de Seguridad</h3>
+        </div>
+        <!-- SOS Panel -->
+        <div class="sos-panel" id="sos-active-panel" style="display:none;">
+          <h3><i class="fas fa-exclamation-circle"></i> ALERTA SOS ACTIVA</h3>
+          <p>Emergencia en progreso — Coordinar con autoridades de inmediato</p>
+          <div class="sos-details">
+            <div class="sos-detail"><div class="sd-label">Conductor</div><div class="sd-value">Roberto M.</div></div>
+            <div class="sos-detail"><div class="sd-label">Vehículo</div><div class="sd-value">Nissan Versa M-456</div></div>
+            <div class="sos-detail"><div class="sd-label">Ubicación</div><div class="sd-value">19.43, -99.13</div></div>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="btn" style="background:#fff; color:var(--danger); font-weight:700;" onclick="callPolice()"><i class="fas fa-phone"></i> Llamar Policía</button>
+            <button class="btn" style="background:rgba(255,255,255,.2); color:#fff;" onclick="listenAudio()"><i class="fas fa-microphone"></i> Audio en vivo</button>
+            <button class="btn" style="background:rgba(255,255,255,.2); color:#fff;" onclick="resolveSOS()"><i class="fas fa-check"></i> Resolver</button>
+          </div>
+        </div>
+        <!-- TripCheck Alerts -->
+        <h4 style="font-size:13px; font-weight:700; margin:16px 0 10px;"><i class="fas fa-route" style="color:var(--primary);"></i> TripCheck — Alertas de Desviación</h4>
+        <div class="alert-list" id="tripcheck-alerts"></div>
+        <!-- SOS History -->
+        <h4 style="font-size:13px; font-weight:700; margin:20px 0 10px;"><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i> Historial SOS</h4>
+        <div id="sos-history"></div>
+      </div>
+
+      <!-- ===== TICKETS ===== -->
+      <div class="page" id="page-tickets">
+        <div style="display:flex; justify-content:space-between; margin-bottom:14px;">
+          <h3 style="font-size:14px; font-weight:700;">Gestión de Tickets y Soporte</h3>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-sm btn-secondary" onclick="filterTickets('all')">Todos</button>
+            <button class="btn btn-sm btn-danger" onclick="filterTickets('open')">Abiertos</button>
+            <button class="btn btn-sm btn-secondary" onclick="filterTickets('resolved')">Resueltos</button>
+          </div>
+        </div>
+        <div id="tickets-list"></div>
+      </div>
+
+      <!-- ===== CITIES ===== -->
+      <div class="page" id="page-cities">
+        <h3 style="font-size:14px; font-weight:700; margin-bottom:14px;">Gestión de Ciudades y Geocercas</h3>
+        <div id="cities-list"></div>
+      </div>
+
+      <!-- ===== API CONFIG ===== -->
+      <div class="page" id="page-api-config">
+        <!-- Login Overlay -->
+        <div id="api-login-overlay" style="display:none; position:fixed; top:0; left:260px; right:0; bottom:0; background:rgba(0,0,0,.7); z-index:200; align-items:center; justify-content:center;">
+          <div style="background:var(--surface); border-radius:var(--radius-lg); padding:32px; width:380px; box-shadow:var(--shadow-lg);">
+            <div style="text-align:center; margin-bottom:20px;">
+              <div style="font-size:48px;">🔐</div>
+              <h3 style="font-size:18px; font-weight:800;">API Config Server</h3>
+              <p style="font-size:12px; color:var(--text-secondary);">By TheFirm69 Systems</p>
+            </div>
+            <div class="input-group"><label>Usuario</label><input type="text" id="api-login-user" value="admin@movilidad.app" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:var(--radius);font-size:13px;"></div>
+            <div class="input-group"><label>Contraseña</label><input type="password" id="api-login-pass" value="TheFirm69!Admin" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:var(--radius);font-size:13px;"></div>
+            <button class="btn btn-primary btn-block" onclick="apiLogin()" style="margin-top:8px;">Ingresar</button>
+          </div>
+        </div>
+
+        <!-- Health Summary -->
+        <div id="api-health-summary" class="card" style="margin-bottom:16px; padding:16px;"></div>
+
+        <!-- Action Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+          <h3 style="font-size:15px; font-weight:800;">🧩 Configuración de APIs y Servicios</h3>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-sm btn-secondary" onclick="loadApiDashboard()">🔄 Recargar</button>
+            <button class="btn btn-sm btn-primary" id="btn-test-all" onclick="testAllApis()">🧪 Probar Todas</button>
+            <button class="btn btn-sm btn-ghost" onclick="exportApiConfigs()">📦 Exportar</button>
+          </div>
+        </div>
+
+        <!-- Category Filters -->
+        <div id="api-category-filters" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px;"></div>
+
+        <!-- API Cards Grid -->
+        <div id="api-cards-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px;"></div>
+
+        <!-- Logs Section -->
+        <div style="margin-top:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h4 style="font-size:14px; font-weight:700;">📋 Registro de Actividad</h4>
+            <button class="btn btn-sm btn-secondary" onclick="loadApiLogs()">Actualizar</button>
+          </div>
+          <div class="card" style="max-height:300px; overflow-y:auto; padding:0;">
+            <div id="api-logs-list" style="padding:12px;"></div>
+          </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div id="api-toast-container" style="position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+
+      <!-- ===== API DETAIL MODAL ===== -->
+      <div id="api-detail-modal" class="api-modal">
+        <div class="api-modal-content">
+          <div class="amc-header">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span id="modal-api-icon" style="font-size:32px;"></span>
+              <div>
+                <h3 id="modal-api-name" style="font-size:16px; font-weight:800;"></h3>
+                <span id="modal-api-version" style="font-size:11px; color:var(--text-light);"></span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="modal-health-badge" class="badge badge-warning">Sin Probar</span>
+              <span id="modal-status-badge" class="badge badge-danger">Deshabilitada</span>
+              <button class="btn btn-sm btn-ghost" onclick="closeApiDetail()" style="font-size:18px; padding:4px 10px;">✕</button>
+            </div>
+          </div>
+          <p id="modal-api-desc" style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;"></p>
+          <a id="modal-api-docs" href="#" target="_blank" style="font-size:12px; color:var(--primary); margin-bottom:16px; display:inline-block;"></a>
+
+          <!-- Tabs -->
+          <div class="amc-tabs">
+            <button class="amc-tab active" onclick="showApiTab('credentials')">🔑 Credenciales</button>
+            <button class="amc-tab" onclick="showApiTab('endpoints')">📡 Endpoints</button>
+            <button class="amc-tab" onclick="showApiTab('pricing')">💰 Cuotas/Precio</button>
+            <button class="amc-tab" onclick="showApiTab('webhook')">🔗 Webhook</button>
+          </div>
+
+          <!-- Tab: Credentials -->
+          <div class="amc-tab-content active" id="tab-credentials">
+            <div id="modal-credentials" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
+          </div>
+
+          <!-- Tab: Endpoints -->
+          <div class="amc-tab-content" id="tab-endpoints">
+            <div id="modal-endpoints"></div>
+          </div>
+
+          <!-- Tab: Pricing -->
+          <div class="amc-tab-content" id="tab-pricing">
+            <h4 style="font-size:12px; font-weight:700; margin-bottom:8px;">Cuotas</h4>
+            <div id="modal-quotas" style="margin-bottom:16px;"></div>
+            <h4 style="font-size:12px; font-weight:700; margin-bottom:8px;">Precios</h4>
+            <div id="modal-pricing"></div>
+          </div>
+
+          <!-- Tab: Webhook -->
+          <div class="amc-tab-content" id="tab-webhook">
+            <div class="input-group"><label>Webhook URL</label><input type="text" id="modal-webhook-url" placeholder="https://api.movilidad.app/webhooks/..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:var(--radius);font-size:13px;"></div>
+            <div class="input-group"><label>Eventos (separados por coma)</label><input type="text" id="modal-webhook-events" placeholder="payment.success, ride.completed" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:var(--radius);font-size:13px;"></div>
+          </div>
+
+          <!-- Test Result -->
+          <div id="modal-test-result" class="test-result" style="display:none;"></div>
+
+          <!-- Actions -->
+          <div style="display:flex; gap:8px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border); flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveApiConfig()">💾 Guardar</button>
+            <button class="btn btn-secondary" id="btn-test-api" onclick="testApiConnection()">🧪 Probar Conexión</button>
+            <button class="btn btn-ghost" onclick="resetApiConfig()">🔄 Reset</button>
+            <div style="flex:1;"></div>
+            <span style="font-size:11px; color:var(--text-light); display:flex; align-items:center;">Último test: <span id="modal-last-tested" style="margin-left:4px;">Nunca</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ANALYTICS ===== -->
+      <div class="page" id="page-analytics">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="sc-label">Tasa de aceptación</div><div class="sc-value">87%</div></div>
+          <div class="stat-card"><div class="sc-label">Tasa de cancelación</div><div class="sc-value">8.2%</div></div>
+          <div class="stat-card"><div class="sc-label">Tiempo espera prom.</div><div class="sc-value">4.3 min</div></div>
+          <div class="stat-card"><div class="sc-label">Ingreso bruto mes</div><div class="sc-value">$23.4M</div></div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-box"><h3>Tasa de aceptación por hora</h3><canvas id="chart-accept" height="200"></canvas></div>
+          <div class="chart-box"><h3>Tasa de cancelación por hora</h3><canvas id="chart-cancel" height="200"></canvas></div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-box"><h3>Ingresos brutos por día (últimos 30 días)</h3><canvas id="chart-rev-daily" height="200"></canvas></div>
+          <div class="chart-box"><h3>Viajes por categoría</h3><canvas id="chart-categories" height="200"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
