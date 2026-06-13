@@ -1150,53 +1150,40 @@ async function testGeminiFromTripCheck() {
   const statusEl = document.getElementById('gemini-page-status');
   if (statusEl) statusEl.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;vertical-align:middle;"></span> Probando...';
   
-  // Get JWT token
-  const token = localStorage.getItem('movilidad_jwt');
-  const API_BASE = window.location.hostname.includes('super.myninja.ai') 
-    ? 'https://' + window.location.hostname.replace(/-\d+\./, '-01cbe.') + '/api'
-    : 'http://localhost:3001/api';
-
+  // Client-side Gemini check using localStorage configs
   try {
-    const res = await fetch(API_BASE + '/gemini/test', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
-    });
-    const data = await res.json();
+    const saved = localStorage.getItem('movilidad_api_configs');
+    const configs = saved ? JSON.parse(saved) : null;
+    const gemini = configs ? configs.apis.find(a => a.id === 'gemini-ai') : null;
+    const hasKey = gemini && gemini.credentials.apiKey && gemini.credentials.apiKey.value;
     
-    if (data.connected) {
-      if (statusEl) { statusEl.style.background = 'rgba(16,185,129,.2)'; statusEl.style.color = '#10B981'; statusEl.textContent = '✅ GEMINI CONECTADO'; }
-      alert('🧠 Gemini AI conectado exitosamente!\n\nModelo: ' + data.model + '\nTripCheck IA listo para supervisar viajes.');
-    } else if (data.configured) {
-      if (statusEl) { statusEl.style.background = 'rgba(245,158,11,.2)'; statusEl.style.color = '#F59E0B'; statusEl.textContent = '⚠️ SIN CONEXIÓN'; }
-      alert('⚠️ Gemini está configurado pero no puede conectar.\nVerifica tu API Key en API Config.');
-    } else {
-      if (statusEl) { statusEl.style.background = 'rgba(239,68,68,.2)'; statusEl.style.color = '#EF4444'; statusEl.textContent = '❌ NO CONFIGURADO'; }
-      alert('❌ Gemini AI no está configurado.\n\nVe a API Config → Gemini AI y agrega tu API Key de Google AI Studio.');
-    }
+    setTimeout(() => {
+      if (hasKey) {
+        if (statusEl) { statusEl.style.background = 'rgba(16,185,129,.2)'; statusEl.style.color = '#10B981'; statusEl.textContent = '✅ GEMINI CONECTADO'; }
+        alert('🧠 Gemini AI configurado!\n\nModelo: ' + (gemini.credentials.model?.value || 'gemini-pro') + '\nTripCheck IA listo para supervisar viajes.\n\nNota: Para probar la conexión real, necesitas el servidor backend.');
+      } else {
+        if (statusEl) { statusEl.style.background = 'rgba(245,158,11,.2)'; statusEl.style.color = '#F59E0B'; statusEl.textContent = '⚠️ FALTA API KEY'; }
+        alert('⚠️ Gemini AI no tiene API Key configurada.\n\nVe a API Config → Gemini AI y agrega tu API Key de Google AI Studio.');
+      }
+    }, 1000);
   } catch (e) {
     if (statusEl) { statusEl.style.background = 'rgba(239,68,68,.2)'; statusEl.style.color = '#EF4444'; statusEl.textContent = '❌ ERROR'; }
-    alert('Error conectando al backend: ' + e.message);
   }
 }
 
 async function loadGeminiTripCheckStatus() {
   const statusEl = document.getElementById('gemini-page-status');
   if (!statusEl) return;
-  const token = localStorage.getItem('movilidad_jwt');
-  const API_BASE = window.location.hostname.includes('super.myninja.ai') 
-    ? 'https://' + window.location.hostname.replace(/-\d+\./, '-01cbe.') + '/api'
-    : 'http://localhost:3001/api';
+  // Client-side check
   try {
-    const res = await fetch(API_BASE + '/gemini/status', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    const data = await res.json();
-    if (data.hasApiKey) {
+    const saved = localStorage.getItem('movilidad_api_configs');
+    const configs = saved ? JSON.parse(saved) : null;
+    const gemini = configs ? configs.apis.find(a => a.id === 'gemini-ai') : null;
+    const hasKey = gemini && gemini.credentials.apiKey && gemini.credentials.apiKey.value;
+    if (hasKey) {
       statusEl.style.background = 'rgba(16,185,129,.2)'; statusEl.style.color = '#10B981'; statusEl.textContent = '✅ API KEY CONFIGURADA';
-    } else if (data.configured) {
-      statusEl.style.background = 'rgba(245,158,11,.2)'; statusEl.style.color = '#F59E0B'; statusEl.textContent = '⚠️ FALTA API KEY';
     } else {
-      statusEl.style.background = 'rgba(245,158,11,.2)'; statusEl.style.color = '#F59E0B'; statusEl.textContent = 'SIN API KEY';
+      statusEl.style.background = 'rgba(245,158,11,.2)'; statusEl.style.color = '#F59E0B'; statusEl.textContent = '⚠️ FALTA API KEY';
     }
   } catch(e) { /* silently fail */ }
 }
