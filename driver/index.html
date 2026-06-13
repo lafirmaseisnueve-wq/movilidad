@@ -585,8 +585,8 @@
             <div class="doc-info"><h5>Póliza de seguro</h5><p>Renovación pendiente</p></div>
           </div>
           <div class="doc-item" style="cursor:pointer;" onclick="showScreen('screen-driver-verify')">
-            <div class="doc-icon" style="background:var(--primary-100); color:var(--primary);"><i class="fas fa-id-card"></i></div>
-            <div class="doc-info"><h5>Verificación INE (Didit)</h5><p>Toca para verificar tu identidad</p></div>
+            <div class="doc-icon" style="background:var(--primary-100); color:var(--primary);"><i class="fas fa-fingerprint"></i></div>
+            <div class="doc-info"><h5>Verificación Biométrica</h5><p>INE + Selfie con Didit</p></div>
             <i class="fas fa-chevron-right" style="color:var(--text-light);"></i>
           </div>
         </div>
@@ -1010,100 +1010,88 @@
   <div style="padding:36px 20px 20px; overflow-y:auto; height:calc(100% - 36px);">
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
       <i class="fas fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="showScreen('screen-profile', 'left')"></i>
-      <h3 style="font-size:20px; font-weight:800;">🛡️ Verificación de Documentos</h3>
+      <h3 style="font-size:20px; font-weight:800;">🛡️ Verificación de Conductor</h3>
     </div>
 
-    <!-- Verification Status -->
-    <div id="driver-verify-banner" style="background:linear-gradient(135deg,#7C3AED,#5B21B6); border-radius:16px; padding:20px; margin-bottom:16px; color:white;">
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-        <div style="font-size:32px;">🪪</div>
+    <!-- Verification Status Banner -->
+    <div id="driver-verify-banner" style="background:linear-gradient(135deg,#7C3AED,#5B21B6); border-radius:16px; padding:24px 20px; margin-bottom:20px; color:white; text-align:center;">
+      <div style="font-size:48px; margin-bottom:10px;">🪪</div>
+      <div style="font-size:18px; font-weight:800;">Verificación Biométrica</div>
+      <div style="font-size:12px; opacity:.9; margin-top:6px;">Foto de INE + Selfie con prueba de vida + OCR</div>
+    </div>
+
+    <!-- How it works -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:16px;">
+      <div style="font-size:14px; font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+        <i class="fas fa-info-circle" style="color:var(--primary);"></i> Verificación biométrica completa
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; align-items:flex-start; gap:10px;">
+          <div style="min-width:28px; height:28px; border-radius:50%; background:var(--primary-50); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800;">1</div>
+          <div>
+            <div style="font-size:13px; font-weight:700;">Fotografía tu INE</div>
+            <div style="font-size:11px; color:var(--text-secondary);">Captura el frente y reverso de tu credencial de elector</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:10px;">
+          <div style="min-width:28px; height:28px; border-radius:50%; background:var(--primary-50); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800;">2</div>
+          <div>
+            <div style="font-size:13px; font-weight:700;">Selfie con prueba de vida</div>
+            <div style="font-size:11px; color:var(--text-secondary);">Detección biométrica en tiempo real para confirmar que eres tú</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:10px;">
+          <div style="min-width:28px; height:28px; border-radius:50%; background:var(--primary-50); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800;">3</div>
+          <div>
+            <div style="font-size:13px; font-weight:700;">Validación automática</div>
+            <div style="font-size:11px; color:var(--text-secondary);">OCR + Registro INE + Comparación facial + Vigencia de credencial</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Verification Status -->
+    <div id="driver-verify-status" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div id="driver-status-icon" style="width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px;"></div>
         <div>
-          <div style="font-size:16px; font-weight:800;">Verificación de Conductor</div>
-          <div style="font-size:12px; opacity:.9;">INE + Documentos con Didit</div>
+          <div id="driver-status-title" style="font-size:14px; font-weight:800;"></div>
+          <div id="driver-status-subtitle" style="font-size:11px; color:var(--text-secondary);"></div>
         </div>
-      </div>
-      <!-- Progress Steps -->
-      <div style="display:flex; gap:4px; margin-top:8px;">
-        <div id="driver-step-1" style="flex:1; height:4px; border-radius:2px; background:rgba(255,255,255,.3);"></div>
-        <div id="driver-step-2" style="flex:1; height:4px; border-radius:2px; background:rgba(255,255,255,.3);"></div>
-        <div id="driver-step-3" style="flex:1; height:4px; border-radius:2px; background:rgba(255,255,255,.3);"></div>
-      </div>
-      <div style="display:flex; justify-content:space-between; font-size:9px; margin-top:4px; opacity:.8;">
-        <span>INE Registro</span><span>Documento OCR</span><span>Completo</span>
       </div>
     </div>
 
-    <!-- Step 1: INE Registry Verification -->
-    <div id="driver-ine-step" style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-        <div style="width:28px; height:28px; border-radius:50%; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800;">1</div>
-        <div style="font-size:14px; font-weight:700;">Verificación INE (Registro)</div>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <input type="text" id="driver-ine-ocr" placeholder="Clave de Elector (OCR)" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
-        <input type="text" id="driver-ine-voter" placeholder="Número de Elector" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
-        <div style="display:flex; gap:8px;">
-          <input type="text" id="driver-ine-name" placeholder="Nombre(s)" style="flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
-          <input type="text" id="driver-ine-lastname" placeholder="Apellido(s)" style="flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
-        </div>
-        <div style="display:flex; gap:8px;">
-          <input type="date" id="driver-ine-dob" style="flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
-          <input type="text" id="driver-ine-cic" placeholder="CIC" style="flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg);">
-        </div>
-        <button id="driver-ine-btn" class="btn btn-primary btn-block" onclick="verifyDriverINE()">
-          <i class="fas fa-shield-alt"></i> Verificar contra registro INE
-        </button>
-        <div id="driver-ine-result" style="display:none; margin-top:8px;"></div>
-      </div>
-    </div>
-
-    <!-- Step 2: Document OCR Verification -->
-    <div id="driver-doc-step" style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px; opacity:.5; pointer-events:none;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-        <div style="width:28px; height:28px; border-radius:50%; background:var(--text-light); color:white; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800;">2</div>
-        <div style="font-size:14px; font-weight:700;">Verificación de Documento (OCR)</div>
-      </div>
-      <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">Sube fotos de tu INE por ambos lados para verificación OCR y prueba de vida.</div>
-      <div style="display:flex; gap:10px; margin-bottom:10px;">
-        <div style="flex:1; border:2px dashed var(--border); border-radius:12px; padding:16px; text-align:center; cursor:pointer;" onclick="document.getElementById('driver-ine-front').click()">
-          <div id="driver-front-preview" style="font-size:28px; margin-bottom:4px;">📷</div>
-          <div style="font-size:11px; font-weight:600;">Frente INE</div>
-          <input type="file" id="driver-ine-front" accept="image/*" style="display:none;" onchange="previewDriverDoc('front')">
-        </div>
-        <div style="flex:1; border:2px dashed var(--border); border-radius:12px; padding:16px; text-align:center; cursor:pointer;" onclick="document.getElementById('driver-ine-back').click()">
-          <div id="driver-back-preview" style="font-size:28px; margin-bottom:4px;">📷</div>
-          <div style="font-size:11px; font-weight:600;">Reverso INE</div>
-          <input type="file" id="driver-ine-back" accept="image/*" style="display:none;" onchange="previewDriverDoc('back')">
-        </div>
-      </div>
-      <button id="driver-doc-btn" class="btn btn-primary btn-block" onclick="verifyDriverDocument()" disabled>
-        <i class="fas fa-camera"></i> Verificar documento
+    <!-- Start Biometric Verification -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:16px; text-align:center;">
+      <div style="font-size:13px; font-weight:700; margin-bottom:6px;">Verificación de Conductor con Didit</div>
+      <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;">Sesión guiada con captura de fotos, selfie con prueba de vida, OCR y validación contra el registro del INE.</div>
+      <button id="driver-kyc-btn" class="btn btn-primary btn-block btn-lg" onclick="startDriverKYC()">
+        <i class="fas fa-camera"></i> Iniciar verificación biométrica
       </button>
-      <div id="driver-doc-result" style="display:none; margin-top:8px;"></div>
     </div>
 
-    <!-- Step 3: Full KYC Session (Alternative) -->
-    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-        <div style="width:28px; height:28px; border-radius:50%; background:var(--primary-100); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800;">⚡</div>
-        <div style="font-size:14px; font-weight:700;">Verificación Completa (KYC)</div>
+    <!-- Verification Results (hidden by default) -->
+    <div id="driver-verify-results" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <div id="driver-result-icon" style="width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px;"></div>
+        <div>
+          <div id="driver-result-title" style="font-size:15px; font-weight:800;"></div>
+          <div id="driver-result-subtitle" style="font-size:11px; color:var(--text-secondary);"></div>
+        </div>
       </div>
-      <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">Sesión guiada con toma de fotos, selfie y verificación en tiempo real. Método más completo.</div>
-      <button class="btn btn-secondary btn-block" onclick="startDriverKYC()">
-        <i class="fas fa-play-circle"></i> Iniciar sesión de verificación
-      </button>
+      <div id="driver-result-details" style="font-size:12px; color:var(--text-secondary);"></div>
     </div>
 
     <!-- Verification History -->
-    <div id="driver-verify-history" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px;">
+    <div id="driver-verify-history" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px;">
       <div style="font-size:13px; font-weight:700; margin-bottom:8px;">Historial de Verificación</div>
       <div id="driver-verify-history-list"></div>
     </div>
 
     <!-- Info Footer -->
     <div style="font-size:11px; color:var(--text-light); text-align:center; padding:8px;">
-      <i class="fas fa-lock"></i> Verificación segura powered by <strong>Didit</strong><br>
-      <span style="opacity:.7;">Registro Federal de Electores + OCR + Liveness</span>
+      <i class="fas fa-lock"></i> Verificación biométrica segura powered by <strong>Didit</strong><br>
+      <span style="opacity:.7;">OCR + Registro INE + Prueba de vida + Comparación facial</span>
     </div>
   </div>
 </div>
@@ -1473,131 +1461,229 @@
     }
 
     // ===== DIDIT DOCUMENT VERIFICATION =====
-    let driverINEVerified = false;
-    let driverDocVerified = false;
-
-    async function verifyDriverINE() {
-      const btn = document.getElementById('driver-ine-btn');
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
-      btn.disabled = true;
-
-      const ineData = {
-        ocr: document.getElementById('driver-ine-ocr').value.trim(),
-        voter_number: document.getElementById('driver-ine-voter').value.trim(),
-        first_name: document.getElementById('driver-ine-name').value.trim(),
-        last_name: document.getElementById('driver-ine-lastname').value.trim(),
-        date_of_birth: document.getElementById('driver-ine-dob').value,
-        cic: document.getElementById('driver-ine-cic').value.trim()
-      };
-
-      if (!ineData.ocr && !ineData.voter_number && !ineData.cic) {
-        alert('⚠️ Ingresa al menos la Clave de Elector, Número de Elector o CIC');
-        btn.innerHTML = '<i class="fas fa-shield-alt"></i> Verificar contra registro INE';
-        btn.disabled = false;
-        return;
-      }
-
-      try {
-        const result = await DiditVerify.verifyDriverDocuments(ineData);
-        const resultDiv = document.getElementById('driver-ine-result');
-        resultDiv.style.display = 'block';
-
-        if (result.success) {
-          driverINEVerified = true;
-          document.getElementById('driver-step-1').style.background = '#10B981';
-          resultDiv.innerHTML = `<div style="padding:10px; background:#D1FAE5; border-radius:10px; font-size:12px; color:#059669; font-weight:600;">✅ INE verificada exitosamente contra el registro del INE</div>`;
-          // Enable step 2
-          document.getElementById('driver-doc-step').style.opacity = '1';
-          document.getElementById('driver-doc-step').style.pointerEvents = 'auto';
-        } else {
-          resultDiv.innerHTML = `<div style="padding:10px; background:#FEE2E2; border-radius:10px; font-size:12px; color:#DC2626; font-weight:600;">❌ ${result.error || 'Verificación fallida. Revisa tus datos.'}</div>`;
-        }
-      } catch (error) {
-        console.error('Driver INE error:', error);
-        document.getElementById('driver-ine-result').style.display = 'block';
-        document.getElementById('driver-ine-result').innerHTML = `<div style="padding:10px; background:#FEE2E2; border-radius:10px; font-size:12px; color:#DC2626;">⚠️ Error: ${error.message}</div>`;
-      }
-
-      btn.innerHTML = '<i class="fas fa-shield-alt"></i> Verificar contra registro INE';
-      btn.disabled = false;
-    }
-
-    function previewDriverDoc(side) {
-      const input = document.getElementById(side === 'front' ? 'driver-ine-front' : 'driver-ine-back');
-      const preview = document.getElementById(side === 'front' ? 'driver-front-preview' : 'driver-back-preview');
-      if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => { preview.innerHTML = `<img src="${e.target.result}" style="width:60px; height:40px; object-fit:cover; border-radius:6px;">`; };
-        reader.readAsDataURL(input.files[0]);
-      }
-      // Enable verify button if both files selected
-      const front = document.getElementById('driver-ine-front').files.length;
-      const back = document.getElementById('driver-ine-back').files.length;
-      document.getElementById('driver-doc-btn').disabled = !(front && back);
-    }
-
-    async function verifyDriverDocument() {
-      const btn = document.getElementById('driver-doc-btn');
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
-      btn.disabled = true;
-
-      const frontFile = document.getElementById('driver-ine-front').files[0];
-      const backFile = document.getElementById('driver-ine-back').files[0];
-
-      if (!frontFile || !backFile) {
-        alert('⚠️ Sube fotos de ambos lados de tu INE');
-        btn.innerHTML = '<i class="fas fa-camera"></i> Verificar documento';
-        btn.disabled = false;
-        return;
-      }
-
-      try {
-        const frontBase64 = await fileToBase64(frontFile);
-        const backBase64 = await fileToBase64(backFile);
-        const result = await DiditVerify.verifyDocument(frontBase64, backBase64);
-        const resultDiv = document.getElementById('driver-doc-result');
-        resultDiv.style.display = 'block';
-
-        if (result.success) {
-          driverDocVerified = true;
-          document.getElementById('driver-step-2').style.background = '#10B981';
-          document.getElementById('driver-step-3').style.background = '#10B981';
-          resultDiv.innerHTML = `<div style="padding:10px; background:#D1FAE5; border-radius:10px; font-size:12px; color:#059669; font-weight:600;">✅ Documento verificado con OCR y prueba de vida</div>`;
-          // Update banner
-          document.getElementById('driver-verify-banner').style.background = 'linear-gradient(135deg,#10B981,#059669)';
-        } else {
-          resultDiv.innerHTML = `<div style="padding:10px; background:#FEE2E2; border-radius:10px; font-size:12px; color:#DC2626; font-weight:600;">❌ ${result.error || 'Verificación de documento fallida'}</div>`;
-        }
-      } catch (error) {
-        console.error('Driver doc verify error:', error);
-        document.getElementById('driver-doc-result').style.display = 'block';
-        document.getElementById('driver-doc-result').innerHTML = `<div style="padding:10px; background:#FEE2E2; border-radius:10px; font-size:12px; color:#DC2626;">⚠️ Error: ${error.message}</div>`;
-      }
-
-      btn.innerHTML = '<i class="fas fa-camera"></i> Verificar documento';
-      btn.disabled = false;
-    }
-
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
+    // ===== DIDIT BIOMETRIC VERIFICATION =====
 
     async function startDriverKYC() {
+      const btn = document.getElementById('driver-kyc-btn');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando sesión...';
+      btn.disabled = true;
+
       try {
-        const result = await DiditVerify.startHostedVerification('driver');
+        const result = await DiditVerify.startHostedVerification({ appType: 'driver', mode: 'redirect' });
         if (result && result.url) {
-          DiditVerify.openVerificationIframe(result.url, result.session_token);
+          btn.innerHTML = '<i class="fas fa-external-link-alt"></i> Sesión abierta';
+          btn.disabled = false;
+
+          // Open the Didit verification in a full-screen iframe overlay
+          openDriverDiditOverlay(result.url, result.sessionId);
         } else if (result && result.error) {
           alert('⚠️ ' + result.error);
+          btn.innerHTML = '<i class="fas fa-camera"></i> Iniciar verificación biométrica';
+          btn.disabled = false;
         }
       } catch (error) {
         console.error('KYC session error:', error);
-        alert('⚠️ Error al crear sesión: ' + error.message);
+        alert('⚠️ Error al crear sesión de verificación: ' + error.message);
+        btn.innerHTML = '<i class="fas fa-camera"></i> Iniciar verificación biométrica';
+        btn.disabled = false;
+      }
+    }
+
+    function openDriverDiditOverlay(verifyUrl, sessionId) {
+      // Create full-screen overlay for Didit verification
+      const overlay = document.createElement('div');
+      overlay.id = 'didit-verify-overlay';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:rgba(0,0,0,.95);display:flex;flex-direction:column;';
+
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#7C3AED;color:white;';
+      header.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-shield-alt"></i>
+          <span style="font-weight:700;font-size:14px;">Verificación de Conductor</span>
+        </div>
+        <button onclick="closeDriverDiditOverlay('${sessionId}')" style="background:rgba(255,255,255,.2);border:none;color:white;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">
+          <i class="fas fa-times"></i> Cerrar
+        </button>
+      `;
+
+      const iframe = document.createElement('iframe');
+      iframe.src = verifyUrl;
+      iframe.style.cssText = 'flex:1;width:100%;border:none;';
+      iframe.allow = 'camera; microphone; fullscreen; autoplay; encrypted-media';
+      iframe.id = 'didit-verify-iframe';
+
+      overlay.appendChild(header);
+      overlay.appendChild(iframe);
+      document.body.appendChild(overlay);
+
+      // Listen for completion messages from Didit
+      window.addEventListener('message', (e) => {
+        if (e.data && (e.data.type === 'didit-verification-complete' || e.data.status === 'completed')) {
+          closeDriverDiditOverlay(sessionId);
+        }
+      });
+    }
+
+    function closeDriverDiditOverlay(sessionId) {
+      const overlay = document.getElementById('didit-verify-overlay');
+      if (overlay) {
+        overlay.remove();
+      }
+
+      // Check session decision if available
+      if (sessionId) {
+        checkDriverDiditSessionResult(sessionId);
+      }
+    }
+
+    async function checkDriverDiditSessionResult(sessionId) {
+      const btn = document.getElementById('driver-kyc-btn');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando resultado...';
+      btn.disabled = true;
+
+      try {
+        const decision = await DiditVerify.getSessionDecision(sessionId);
+        if (decision.success) {
+          showDriverVerificationResult({
+            success: true,
+            data: decision.decision,
+            sessionId: sessionId
+          });
+        } else {
+          showDriverVerificationResult({
+            success: false,
+            pending: true,
+            sessionId: sessionId,
+            error: decision.error || 'La verificación aún está siendo procesada'
+          });
+        }
+      } catch (error) {
+        console.error('Session decision error:', error);
+        showDriverVerificationResult({
+          success: false,
+          error: 'No se pudo obtener el resultado. Intenta nuevamente.'
+        });
+      }
+
+      btn.innerHTML = '<i class="fas fa-camera"></i> Iniciar verificación biométrica';
+      btn.disabled = false;
+    }
+
+    function showDriverVerificationResult(result) {
+      const resultsDiv = document.getElementById('driver-verify-results');
+      const iconDiv = document.getElementById('driver-result-icon');
+      const titleDiv = document.getElementById('driver-result-title');
+      const subtitleDiv = document.getElementById('driver-result-subtitle');
+      const detailsDiv = document.getElementById('driver-result-details');
+
+      resultsDiv.style.display = 'block';
+
+      if (result.success) {
+        iconDiv.style.background = '#D1FAE5';
+        iconDiv.innerHTML = '✅';
+        titleDiv.textContent = 'Conductor Verificado';
+        titleDiv.style.color = '#059669';
+        subtitleDiv.textContent = 'Verificación biométrica exitosa';
+
+        const decision = result.data || {};
+        const docInfo = decision.id_verification || decision.document || {};
+        const name = docInfo.full_name || docInfo.first_name + ' ' + (docInfo.last_name || '') || 'Confirmado';
+
+        detailsDiv.innerHTML = `
+          <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:8px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>Método</span><span style="color:var(--primary); font-weight:700;">Biométrico ✓</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>Nombre</span><span style="font-weight:600;">${name}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>Documento</span><span style="font-weight:600;">${docInfo.document_type || 'INE'}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span>Verificado</span><span style="font-weight:600;">${new Date().toLocaleDateString('es-MX')}</span>
+            </div>
+          </div>
+        `;
+
+        // Update the banner to verified
+        document.getElementById('driver-verify-banner').style.background = 'linear-gradient(135deg,#10B981,#059669)';
+        document.getElementById('driver-verify-banner').innerHTML = `
+          <div style="font-size:48px; margin-bottom:10px;">✅</div>
+          <div style="font-size:18px; font-weight:800;">Conductor Verificado</div>
+          <div style="font-size:12px; opacity:.9; margin-top:6px;">Verificación biométrica completada exitosamente</div>
+        `;
+
+        // Show verified status card
+        const statusDiv = document.getElementById('driver-verify-status');
+        statusDiv.style.display = 'block';
+        document.getElementById('driver-status-icon').style.background = '#D1FAE5';
+        document.getElementById('driver-status-icon').innerHTML = '✅';
+        document.getElementById('driver-status-title').textContent = 'Conductor Verificado';
+        document.getElementById('driver-status-title').style.color = '#059669';
+        document.getElementById('driver-status-subtitle').textContent = 'Verificado el ' + new Date().toLocaleDateString('es-MX');
+      } else if (result.pending) {
+        iconDiv.style.background = '#FEF3C7';
+        iconDiv.innerHTML = '⏳';
+        titleDiv.textContent = 'Verificación en Proceso';
+        titleDiv.style.color = '#D97706';
+        subtitleDiv.textContent = 'Los resultados están siendo procesados';
+        detailsDiv.innerHTML = `
+          <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:8px;">
+            <div style="font-size:12px; color:var(--text-secondary);">
+              Tu verificación biométrica está siendo procesada. Recibirás el resultado en breve.
+            </div>
+            <button class="btn btn-primary btn-block" style="margin-top:10px;" onclick="checkDriverDiditSessionResult('${result.sessionId}')">
+              <i class="fas fa-sync-alt"></i> Verificar estado
+            </button>
+          </div>
+        `;
+      } else {
+        iconDiv.style.background = '#FEE2E2';
+        iconDiv.innerHTML = '❌';
+        titleDiv.textContent = 'Verificación No Exitosa';
+        titleDiv.style.color = '#DC2626';
+        subtitleDiv.textContent = 'No se pudo validar tu identidad biométricamente';
+        detailsDiv.innerHTML = `
+          <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:8px;">
+            <div style="font-size:12px; color:var(--text-secondary);">
+              ${result.error || 'La verificación biométrica no fue exitosa. Asegúrate de tener buena iluminación y seguir las instrucciones.'}
+            </div>
+            <button class="btn btn-primary btn-block" style="margin-top:10px;" onclick="startDriverKYC()">
+              <i class="fas fa-camera"></i> Intentar de nuevo
+            </button>
+          </div>
+        `;
+
+        document.getElementById('driver-verify-banner').style.background = 'linear-gradient(135deg,#EF4444,#DC2626)';
+        document.getElementById('driver-verify-banner').innerHTML = `
+          <div style="font-size:48px; margin-bottom:10px;">❌</div>
+          <div style="font-size:18px; font-weight:800;">Verificación No Exitosa</div>
+          <div style="font-size:12px; opacity:.9; margin-top:6px;">Intenta nuevamente con mejor iluminación</div>
+        `;
+      }
+    }
+
+    // Load existing verification status on screen load
+    function loadDriverVerificationStatus() {
+      const status = DiditVerify.getVerificationStatus();
+      const statusDiv = document.getElementById('driver-verify-status');
+
+      if (status.ineVerified || status.docVerified) {
+        statusDiv.style.display = 'block';
+        document.getElementById('driver-status-icon').style.background = '#D1FAE5';
+        document.getElementById('driver-status-icon').innerHTML = '✅';
+        document.getElementById('driver-status-title').textContent = 'Conductor Verificado';
+        document.getElementById('driver-status-title').style.color = '#059669';
+        document.getElementById('driver-status-subtitle').textContent = 'Verificado el ' + new Date(status.ineVerifiedAt || status.docVerifiedAt).toLocaleDateString('es-MX');
+
+        document.getElementById('driver-verify-banner').style.background = 'linear-gradient(135deg,#10B981,#059669)';
+        document.getElementById('driver-verify-banner').innerHTML = `
+          <div style="font-size:48px; margin-bottom:10px;">✅</div>
+          <div style="font-size:18px; font-weight:800;">Conductor Verificado</div>
+          <div style="font-size:12px; opacity:.9; margin-top:6px;">Verificación biométrica completada</div>
+        `;
       }
     }
   </script>

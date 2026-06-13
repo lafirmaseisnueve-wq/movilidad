@@ -3,9 +3,16 @@
    By TheFirm69 Systems
    
    Integrates with https://business.didit.me/ for:
-   - INE credential validity verification (mex_ine_vigencia)
-   - ID Verification (OCR + document liveness)
-   - KYC Session creation (hosted verification flow)
+   - KYC Session creation (hosted biometric verification flow)
+     - INE photo capture (front + back)
+     - Selfie with liveness detection
+     - OCR extraction + INE registry validation
+     - Facial comparison (selfie vs INE portrait)
+   - Session decision retrieval
+   
+   ALL verifications are BIOMETRIC (photo/selfie + OCR + liveness)
+   No text-based registry queries — the Didit hosted session
+   handles everything in one seamless flow.
    
    API Docs: https://docs.didit.me/api-reference/overview
    ================================================================ */
@@ -14,8 +21,6 @@ const DiditVerify = (() => {
   // ---- Configuration ----
   const DIDIT_BASE_URL = 'https://verification.didit.me';
   const DIDIT_V3_SESSION = '/v3/session/';
-  const DIDIT_V3_ID_VERIFY = '/v3/id-verification/';
-  const DIDIT_V3_DB_VALIDATE = '/v3/database-validation/';
   const DIDIT_V3_SESSION_DECISION = '/v3/session/{sessionId}/decision/';
   const DIDIT_SDK_WEB = 'https://cdn.jsdelivr.net/npm/@didit-protocol/sdk-web@latest/dist/index.min.js';
 
@@ -48,6 +53,7 @@ const DiditVerify = (() => {
           _webhookSecret = diditApi.credentials?.webhookSecret?.value || '';
           _webhookUrl = diditApi.credentials?.webhookUrl?.value || '';
           _initialized = true;
+          console.log('[Didit] Config loaded. API Key:', _apiKey ? '✓' : '✗', 'Workflow:', _workflowId ? '✓' : '✗');
           return true;
         }
       }
@@ -61,7 +67,12 @@ const DiditVerify = (() => {
     return _apiKey && _apiKey.length > 10;
   }
 
-  // ---- KYC Session (Hosted Verification Flow) ----
+  // ---- KYC Session (Hosted Biometric Verification Flow) ----
+  // This is the PRIMARY verification method.
+  // Creates a hosted session where the user:
+  // 1. Photographs their INE (front + back)
+  // 2. Takes a selfie with liveness detection
+  // 3. System performs: OCR + INE registry validation + facial comparison
   async function createSession(params = {}) {
     if (!isConfigured()) {
       return { error: 'Didit API Key not configured. Go to Admin Panel → API Config → Didit Verification.' };
@@ -74,7 +85,7 @@ const DiditVerify = (() => {
 
     const body = {
       workflow_id: workflowId,
-      vendor_data: params.vendorData || `movilidad-user-${Date.now()}`,
+      vendor_data: params.vendorData || `movilidad-${params.appType || 'user'}-${Date.now()}`,
       callback: params.callback || _webhookUrl || window.location.origin + '/verify/callback',
       callback_method: params.callbackMethod || 'both',
       language: params.language || 'es',
@@ -88,6 +99,8 @@ const DiditVerify = (() => {
     if (params.expectedDetails) {
       body.expected_details = params.expectedDetails;
     }
+
+    console.log('[Didit] Creating KYC session for:', params.appType || 'user');
 
     try {
       const response = await fetch(DIDIT_BASE_URL + DIDIT_V3_SESSION, {
@@ -104,9 +117,11 @@ const DiditVerify = (() => {
       if (response.status === 201) {
         // Store session info locally
         _saveSessionData(data);
+        console.log('[Didit] Session created:', data.session_id);
         return { success: true, session: data };
       }
 
+      console.error('[Didit] Session creation failed:', response.status, data);
       return { error: data.detail || data.error || 'Failed to create session', status: response.status };
     } catch(e) {
       console.error('[Didit] Session creation error:', e);
@@ -114,127 +129,34 @@ const DiditVerify = (() => {
     }
   }
 
-  // ---- INE Credential Validity Verification (Database Validation) ----
-  async function verifyINE(ineData = {}) {
-    if (!isConfigured()) {
-      return { error: 'Didit API Key not configured. Go to Admin Panel → API Config → Didit Verification.' };
+  // ---- Start Hosted Verification (for iframe/redirect) ----
+  // This is the main entry point for biometric verification.
+  // Creates a session and returns the URL for the hosted verification flow.
+  async function startHostedVerification(params = {}) {
+    const appType = typeof params === 'string' ? params : (params.appType || 'passenger');
+    const sessionParams = {
+      ...params,
+      appType: appType
+    };
+
+    const sessionResult = await createSession(sessionParams);
+
+    if (sessionResult.success && sessionResult.session?.url) {
+      return {
+        success: true,
+        url: sessionResult.session.url,
+        sessionId: sessionResult.session.session_id,
+        sessionToken: sessionResult.session.session_token,
+        mode: params.mode || 'redirect' // 'redirect', 'iframe', 'sdk'
+      };
     }
 
-    const formData = new FormData();
-    formData.append('issuing_state', 'MEX');
-    formData.append('services', 'mex_ine_vigencia');
-    formData.append('vendor_data', ineData.vendorData || `movilidad-ine-${Date.now()}`);
-
-    // Optional cross-check fields from INE
-    if (ineData.cic) formData.append('cic', ineData.cic);
-    if (ineData.identificadorCiudadano) formData.append('identificador_ciudadano', ineData.identificadorCiudadano);
-    if (ineData.ocr) formData.append('ocr', ineData.ocr);
-    if (ineData.voterNumber) formData.append('voter_number', ineData.voterNumber);
-    if (ineData.emissionNumber) formData.append('emission_number', ineData.emissionNumber);
-    if (ineData.firstName) formData.append('first_name', ineData.firstName);
-    if (ineData.lastName) formData.append('last_name', ineData.lastName);
-    if (ineData.dateOfBirth) formData.append('date_of_birth', ineData.dateOfBirth);
-
-    try {
-      const response = await fetch(DIDIT_BASE_URL + DIDIT_V3_DB_VALIDATE, {
-        method: 'POST',
-        headers: {
-          'x-api-key': _apiKey
-        },
-        body: formData
-      });
-
-      const data = await response.json();
-
-      if (response.status === 200) {
-        const result = {
-          success: true,
-          matchType: data.match_type,
-          status: data.status,
-          requestId: data.request_id,
-          validations: data.validations || [],
-          isVerified: data.match_type === 'full_match' && data.status === 'Approved'
-        };
-        _saveVerificationResult('ine', result);
-        return result;
-      }
-
-      return { error: data.detail || 'INE verification failed', status: response.status };
-    } catch(e) {
-      console.error('[Didit] INE verification error:', e);
-      return { error: 'Network error: ' + e.message };
-    }
-  }
-
-  // ---- ID Verification (OCR + Document Liveness) ----
-  async function verifyDocument(frontImage, backImage = null, options = {}) {
-    if (!isConfigured()) {
-      return { error: 'Didit API Key not configured. Go to Admin Panel → API Config → Didit Verification.' };
-    }
-
-    const formData = new FormData();
-    formData.append('front_image', frontImage);
-    if (backImage) formData.append('back_image', backImage);
-    formData.append('perform_document_liveness', options.performLiveness ? 'true' : 'true');
-    formData.append('save_api_request', 'true');
-    formData.append('vendor_data', options.vendorData || `movilidad-doc-${Date.now()}`);
-    if (options.minimumAge) formData.append('minimum_age', options.minimumAge.toString());
-    if (options.metadata) formData.append('metadata', JSON.stringify(options.metadata));
-
-    try {
-      const response = await fetch(DIDIT_BASE_URL + DIDIT_V3_ID_VERIFY, {
-        method: 'POST',
-        headers: {
-          'x-api-key': _apiKey
-        },
-        body: formData
-      });
-
-      const data = await response.json();
-
-      if (response.status === 200) {
-        const result = {
-          success: true,
-          status: data.id_verification?.status,
-          documentType: data.id_verification?.document_type,
-          documentNumber: data.id_verification?.document_number,
-          fullName: data.id_verification?.full_name,
-          firstName: data.id_verification?.first_name,
-          lastName: data.id_verification?.last_name,
-          dateOfBirth: data.id_verification?.date_of_birth,
-          age: data.id_verification?.age,
-          gender: data.id_verification?.gender,
-          nationality: data.id_verification?.nationality,
-          expirationDate: data.id_verification?.expiration_date,
-          issuingState: data.id_verification?.issuing_state,
-          address: data.id_verification?.formatted_address,
-          portraitImage: data.id_verification?.portrait_image,
-          warnings: data.id_verification?.warnings || [],
-          isApproved: data.id_verification?.status === 'Approved',
-          requestId: data.request_id,
-          qualityScores: {
-            front: data.id_verification?.front_image_quality_score,
-            back: data.id_verification?.back_image_quality_score
-          },
-          mrz: data.id_verification?.mrz,
-          raw: data
-        };
-        _saveVerificationResult('document', result);
-        return result;
-      }
-
-      if (response.status === 400 && data.error === 'COULD_NOT_RECOGNIZE_DOCUMENT') {
-        return { error: 'No se pudo reconocer el documento. Asegúrate de que la imagen sea clara y el documento sea válido.', status: 400 };
-      }
-
-      return { error: data.detail || 'Document verification failed', status: response.status };
-    } catch(e) {
-      console.error('[Didit] Document verification error:', e);
-      return { error: 'Network error: ' + e.message };
-    }
+    return sessionResult;
   }
 
   // ---- Get Session Decision ----
+  // After the user completes the biometric verification flow,
+  // call this to get the decision (approved/rejected/pending).
   async function getSessionDecision(sessionId) {
     if (!isConfigured()) {
       return { error: 'Didit API Key not configured' };
@@ -252,6 +174,15 @@ const DiditVerify = (() => {
       const data = await response.json();
 
       if (response.status === 200) {
+        // Save the verification result locally
+        const isApproved = data.status === 'approved' || data.decision === 'Approved';
+        _saveVerificationResult('biometric', {
+          success: isApproved,
+          status: data.status,
+          sessionId: sessionId,
+          decision: data,
+          isVerified: isApproved
+        });
         return { success: true, decision: data };
       }
 
@@ -262,41 +193,63 @@ const DiditVerify = (() => {
     }
   }
 
-  // ---- Start Hosted Verification (for iframe/redirect) ----
-  async function startHostedVerification(params = {}) {
-    const sessionResult = await createSession(params);
-
-    if (sessionResult.success && sessionResult.session?.url) {
-      return {
-        success: true,
-        url: sessionResult.session.url,
-        sessionId: sessionResult.session.session_id,
-        sessionToken: sessionResult.session.session_token,
-        mode: params.mode || 'redirect' // 'redirect', 'iframe', 'sdk'
-      };
-    }
-
-    return sessionResult;
+  // ---- Open Verification in iframe (Legacy - kept for compatibility) ----
+  function openVerificationIframe(verificationUrl, sessionToken, options = {}) {
+    // Use the full-screen overlay approach instead of container-based
+    _openFullscreenOverlay(verificationUrl, sessionToken, options);
+    return true;
   }
 
-  // ---- Open Verification in iframe ----
-  function openVerificationIframe(containerId, verificationUrl, options = {}) {
-    const container = document.getElementById(containerId);
-    if (!container) {
-      console.error('[Didit] Container not found:', containerId);
-      return false;
-    }
+  // ---- Full-screen overlay for Didit verification ----
+  function _openFullscreenOverlay(verifyUrl, sessionId, options = {}) {
+    // Remove any existing overlay
+    const existing = document.getElementById('didit-verify-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'didit-verify-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:rgba(0,0,0,.95);display:flex;flex-direction:column;';
+
+    const appLabel = options.appType === 'driver' ? 'Verificación de Conductor' : 'Verificación de Identidad';
+
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#7C3AED;color:white;';
+    header.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <i class="fas fa-shield-alt"></i>
+        <span style="font-weight:700;font-size:14px;">${appLabel}</span>
+      </div>
+      <button id="didit-overlay-close-btn" style="background:rgba(255,255,255,.2);border:none;color:white;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">
+        <i class="fas fa-times"></i> Cerrar
+      </button>
+    `;
 
     const iframe = document.createElement('iframe');
-    iframe.src = verificationUrl;
-    iframe.style.width = '100%';
-    iframe.style.height = options.height || '700px';
-    iframe.style.border = 'none';
-    iframe.style.borderRadius = '16px';
+    iframe.src = verifyUrl;
+    iframe.style.cssText = 'flex:1;width:100%;border:none;';
     iframe.allow = 'camera; microphone; fullscreen; autoplay; encrypted-media';
     iframe.id = 'didit-verify-iframe';
-    container.innerHTML = '';
-    container.appendChild(iframe);
+
+    overlay.appendChild(header);
+    overlay.appendChild(iframe);
+    document.body.appendChild(overlay);
+
+    // Close button handler
+    document.getElementById('didit-overlay-close-btn').onclick = () => {
+      overlay.remove();
+      if (options.onClose) options.onClose(sessionId);
+    };
+
+    // Listen for completion messages from Didit
+    const messageHandler = (e) => {
+      if (e.data && (e.data.type === 'didit-verification-complete' || e.data.status === 'completed' || e.data.event === 'verification.completed')) {
+        window.removeEventListener('message', messageHandler);
+        overlay.remove();
+        if (options.onComplete) options.onComplete(sessionId);
+      }
+    };
+    window.addEventListener('message', messageHandler);
+
     return true;
   }
 
@@ -339,9 +292,16 @@ const DiditVerify = (() => {
       results[type] = { ...result, verifiedAt: new Date().toISOString() };
       localStorage.setItem('movilidad_didit_results', JSON.stringify(results));
 
-      // Also update the user verification status
+      // Update the user verification status
       const userStatus = JSON.parse(localStorage.getItem('movilidad_user_verification') || '{}');
-      if (type === 'ine') {
+      if (type === 'biometric') {
+        userStatus.ineVerified = result.isVerified;
+        userStatus.ineVerifiedAt = new Date().toISOString();
+        userStatus.docVerified = result.isVerified;
+        userStatus.docVerifiedAt = new Date().toISOString();
+        userStatus.verificationMethod = 'biometric_kyc';
+        userStatus.sessionId = result.sessionId;
+      } else if (type === 'ine') {
         userStatus.ineVerified = result.isVerified;
         userStatus.ineVerifiedAt = new Date().toISOString();
         userStatus.ineMatchType = result.matchType;
@@ -388,64 +348,117 @@ const DiditVerify = (() => {
     localStorage.removeItem('movilidad_user_verification');
   }
 
-  // ---- Passenger INE Verification Flow ----
-  async function verifyPassengerINE(ineData) {
-    // Step 1: Verify INE against government registry
-    const ineResult = await verifyINE(ineData);
+  // ---- Legacy methods (kept for backward compatibility, not used in UI) ----
+  // These are kept in case the Admin Panel or other parts reference them,
+  // but the primary flow is biometric KYC sessions only.
 
-    if (ineResult.error) {
-      return { error: ineResult.error, step: 'ine_registry' };
+  async function verifyINE(ineData = {}) {
+    console.warn('[Didit] verifyINE() is deprecated — use startHostedVerification() for biometric verification');
+    if (!isConfigured()) {
+      return { error: 'Didit API Key not configured. Go to Admin Panel → API Config → Didit Verification.' };
     }
 
-    // If INE matches, mark as verified
-    if (ineResult.isVerified) {
-      return {
-        success: true,
-        message: 'INE verificada exitosamente contra el registro del INE',
-        matchType: ineResult.matchType,
-        step: 'ine_registry'
-      };
-    }
+    const formData = new FormData();
+    formData.append('issuing_state', 'MEX');
+    formData.append('services', 'mex_ine_vigencia');
+    formData.append('vendor_data', ineData.vendorData || `movilidad-ine-${Date.now()}`);
 
-    // If no match, still save the attempt
-    return {
-      success: false,
-      message: 'La INE no pudo ser verificada contra el registro. Se requiere revisión manual.',
-      matchType: ineResult.matchType,
-      step: 'ine_registry'
-    };
+    if (ineData.cic) formData.append('cic', ineData.cic);
+    if (ineData.ocr) formData.append('ocr', ineData.ocr);
+    if (ineData.voterNumber) formData.append('voter_number', ineData.voterNumber);
+    if (ineData.emissionNumber) formData.append('emission_number', ineData.emissionNumber);
+    if (ineData.firstName) formData.append('first_name', ineData.firstName);
+    if (ineData.lastName) formData.append('last_name', ineData.lastName);
+    if (ineData.dateOfBirth) formData.append('date_of_birth', ineData.dateOfBirth);
+
+    try {
+      const response = await fetch(DIDIT_BASE_URL + '/v3/database-validation/', {
+        method: 'POST',
+        headers: { 'x-api-key': _apiKey },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.status === 200) {
+        const result = {
+          success: true,
+          matchType: data.match_type,
+          status: data.status,
+          requestId: data.request_id,
+          validations: data.validations || [],
+          isVerified: data.match_type === 'full_match' && data.status === 'Approved'
+        };
+        _saveVerificationResult('ine', result);
+        return result;
+      }
+
+      return { error: data.detail || 'INE verification failed', status: response.status };
+    } catch(e) {
+      console.error('[Didit] INE verification error:', e);
+      return { error: 'Network error: ' + e.message };
+    }
   }
 
-  // ---- Driver Full Verification Flow ----
+  async function verifyDocument(frontImage, backImage = null, options = {}) {
+    console.warn('[Didit] verifyDocument() is deprecated — use startHostedVerification() for biometric verification');
+    if (!isConfigured()) {
+      return { error: 'Didit API Key not configured. Go to Admin Panel → API Config → Didit Verification.' };
+    }
+
+    const formData = new FormData();
+    formData.append('front_image', frontImage);
+    if (backImage) formData.append('back_image', backImage);
+    formData.append('perform_document_liveness', 'true');
+    formData.append('save_api_request', 'true');
+    formData.append('vendor_data', options.vendorData || `movilidad-doc-${Date.now()}`);
+    if (options.minimumAge) formData.append('minimum_age', options.minimumAge.toString());
+    if (options.metadata) formData.append('metadata', JSON.stringify(options.metadata));
+
+    try {
+      const response = await fetch(DIDIT_BASE_URL + '/v3/id-verification/', {
+        method: 'POST',
+        headers: { 'x-api-key': _apiKey },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.status === 200) {
+        const result = {
+          success: true,
+          status: data.id_verification?.status,
+          documentType: data.id_verification?.document_type,
+          documentNumber: data.id_verification?.document_number,
+          fullName: data.id_verification?.full_name,
+          firstName: data.id_verification?.first_name,
+          lastName: data.id_verification?.last_name,
+          dateOfBirth: data.id_verification?.date_of_birth,
+          age: data.id_verification?.age,
+          isApproved: data.id_verification?.status === 'Approved',
+          requestId: data.request_id,
+          raw: data
+        };
+        _saveVerificationResult('document', result);
+        return result;
+      }
+
+      return { error: data.detail || 'Document verification failed', status: response.status };
+    } catch(e) {
+      console.error('[Didit] Document verification error:', e);
+      return { error: 'Network error: ' + e.message };
+    }
+  }
+
+  async function verifyPassengerINE(ineData) {
+    console.warn('[Didit] verifyPassengerINE() is deprecated — use startHostedVerification() for biometric verification');
+    return await verifyINE(ineData);
+  }
+
   async function verifyDriverDocuments(driverData) {
-    const results = {
-      ine: null,
-      license: null,
-      overall: false
-    };
-
-    // Step 1: INE verification against government registry
-    if (driverData.ine) {
-      results.ine = await verifyINE(driverData.ine);
-    }
-
-    // Step 2: Document OCR verification (license, etc.)
-    if (driverData.licenseFront) {
-      results.license = await verifyDocument(
-        driverData.licenseFront,
-        driverData.licenseBack || null,
-        {
-          vendorData: driverData.vendorData || `movilidad-driver-${Date.now()}`,
-          metadata: { doc_type: 'driver_license', app_type: 'driver' }
-        }
-      );
-    }
-
-    // Overall status
-    results.overall = (results.ine?.isVerified || results.ine?.success) &&
-                      (results.license?.isApproved || !driverData.licenseFront);
-
-    return results;
+    console.warn('[Didit] verifyDriverDocuments() is deprecated — use startHostedVerification() for biometric verification');
+    const ine = driverData.ine || driverData;
+    return await verifyINE(ine);
   }
 
   // ---- Public API ----
@@ -454,18 +467,19 @@ const DiditVerify = (() => {
     loadConfig,
     isConfigured,
     createSession,
-    verifyINE,
-    verifyDocument,
-    getSessionDecision,
     startHostedVerification,
+    getSessionDecision,
     openVerificationIframe,
     openUniLinkIframe,
-    verifyPassengerINE,
-    verifyDriverDocuments,
     getVerificationStatus,
     getVerificationResults,
     getSessions,
-    clearVerificationData
+    clearVerificationData,
+    // Legacy methods (deprecated — use startHostedVerification instead)
+    verifyINE,
+    verifyDocument,
+    verifyPassengerINE,
+    verifyDriverDocuments
   };
 })();
 
